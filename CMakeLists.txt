@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+project(SISTEMA_IEEE_FC_118)
+add_executable(SISTEMA_IEEE_FC_118 init.c)
+target_link_libraries(SISTEMA_IEEE_FC_118 utilities)
+add_subdirectory(utilities)
