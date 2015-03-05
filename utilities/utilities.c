@@ -1,5 +1,46 @@
 #include <stdlib.h>
 #include "utilities.h"
+#include <string.h>
+
+int calcularYbus(structData *data, double *ybus){
+    ybus = malloc(data->numN*data->numN*sizeof(double));
+
+}
+
+int zeros(int size,double *An){
+    int i;
+    for (i = 0; i < size; i++) {
+        An[i] = 0.0;
+    }
+    return 0;
+}
+
+int ones(int size,double *Vn){
+    int i;
+    for (i = 0; i < size; i++) {
+        Vn[i] = 1.0;
+    }
+    return 0;
+}
+
+double maxLineas(structData *data, int widthLineas,int heightLineas){
+    int i;
+    double mayorLineas1 = 0, mayorLineas2;
+    for (i = 0; i < heightLineas; i++) {
+        if(mayorLineas1 < data->lineas[i*widthLineas]){
+            mayorLineas1 = data->lineas[i*widthLineas];
+        }
+        if(mayorLineas2 < data->lineas[i*widthLineas+1]){
+            mayorLineas2 = data->lineas[i*widthLineas+1];
+        }
+    }
+
+    if(mayorLineas2>=mayorLineas1)
+        return mayorLineas2;
+    else
+        return mayorLineas1;
+
+}
 
 int printData(structData *data, int widthLineas, int heightLineas, int widthCargas, int heightCargas, int widthGen, int heightGen){
     int i;
