@@ -61,10 +61,35 @@ int main(){
     zeros(NumP,dP);
     zeros(NumQ,dQ);
 
-    int i;
+    int Error = 100;
+    int iter = 0;
+
+    double *Jpp, *Jpq, *Jqp, *Jqq, *Pn, *Qn;
+
+    Jpp = (double*)malloc(data->numN*data->numN*sizeof(double));
+    Jpq = (double*)malloc(data->numN*data->numN*sizeof(double));
+    Jqp = (double*)malloc(data->numN*data->numN*sizeof(double));
+    Jqq = (double*)malloc(data->numN*data->numN*sizeof(double));
+    Pn = (double*)malloc(data->numN*sizeof(double));
+    Qn = (double*)malloc(data->numN*sizeof(double));
+
+    while (Error<=100){
+        calcularJacobiano(data,ybusReal,ybusImag,Vn,An,Jpp,Jpq,Jqp,Jqq,Pn,Qn);
+        int i,j;
+        for (i = 0; i < data->numN; i++) {
+            for (j = 0; j < data->numN; j++) {
+                printf("%.4lf ",Jqq[i*(int)data->numN+j]);
+            }
+            printf("\n");
+        }
+
+        Error++;
+    }
+
+    /*int i;
     for (i = 0; i < data->numN; i++) {
         printf("%.4lf %.4lf\n",Pref[i],Qref[i]);
-    }
+    }*/
    // printf("%.5lf\n",Vn[100]);
     //printf("%.5lf\n",data->numN);
     //printData(data,widthLineas, heightLineas, widthCargas, heightCargas, widthGen, heightGen);

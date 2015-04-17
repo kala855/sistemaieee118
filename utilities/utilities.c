@@ -1,6 +1,68 @@
 #include <stdlib.h>
 #include "utilities.h"
 #include <string.h>
+#include <math.h>
+
+int calcularJacobiano(structData *data, double *ybusReal, double *ybusImag, double *Vn, double *An, \
+        double *Jpp, double *Jpq, double *Jqp, double *Jqq, double *Pn, double *Qn){
+
+    zeros(data->numN,Pn);
+    zeros(data->numN,Qn);
+    double akm, *H,*N,*J,*L;
+    int k,m,widthLineas=data->numN;
+    for (k = 0; k < data->numN; k++) {
+        for (m = 0; m < data->numN; m++) {
+            akm = An[k] - An[m];
+            Pn[k] = Pn[k] + Vn[m]*(ybusReal[k*widthLineas+m]*cos(akm) + \
+                    ybusImag[k*widthLineas+m]*sin(akm));
+            Qn[k] = Qn[k] - Vn[m]*(ybusImag[k*widthLineas+m]*cos(akm) - \
+                    ybusReal[k*widthLineas+m]*sin(akm));
+        }
+        Pn[k] = Pn[k]*Vn[k];
+        Qn[k] = Qn[k]*Vn[k];
+    }
+
+    //for (k = 0; k < data->numN; k++) {
+      //  printf("%.8lf %.8lf\n",Pn[k],Qn[k]);
+   // }
+
+    H = (double*)malloc(data->numN*data->numN*sizeof(double));
+    N = (double*)malloc(data->numN*data->numN*sizeof(double));
+    J = (double*)malloc(data->numN*data->numN*sizeof(double));
+    L = (double*)malloc(data->numN*data->numN*sizeof(double));
+
+    zeros(data->numN*data->numN,H);
+    zeros(data->numN*data->numN,N);
+    zeros(data->numN*data->numN,J);
+    zeros(data->numN*data->numN,L);
+
+    for (k = 0; k < data->numN; k++) {
+        for (m = 0; m < data->numN; m++) {
+            if(k==m){
+                H[k*widthLineas+k] = -ybusImag[k*widthLineas+k]*Vn[k]*Vn[k]-Qn[k];
+                N[k*widthLineas+k] = ybusReal[k*widthLineas+k]*Vn[k] + Pn[k]/Vn[k];
+                J[k*widthLineas+k] = -ybusReal[k*widthLineas+k]*Vn[k] + Pn[k];
+                L[k*widthLineas+k] = -ybusImag[k*widthLineas+k]*Vn[k] + Qn[k]/Vn[k];
+            }else{
+                akm = An[k] - An[m];
+                H[k*widthLineas+m] = Vn[k]*Vn[m]*(ybusReal[k*widthLineas+m]*sin(akm)- \
+                        ybusImag[k*widthLineas+m]*cos(akm)) ;
+                N[k*widthLineas+m] = Vn[k]*(ybusReal[k*widthLineas+m]*cos(akm)+ybusImag[k*widthLineas+m]*sin(akm));
+                J[k*widthLineas+m] = -N[k*widthLineas+m]*Vn[m];
+                L[k*widthLineas+m] = H[k*widthLineas+m]/Vn[m];
+            }
+        }
+    }
+
+    memcpy(Jpp,H,data->numN*data->numN*sizeof(double));
+    memcpy(Jpq,N,data->numN*data->numN*sizeof(double));
+    memcpy(Jqp,J,data->numN*data->numN*sizeof(double));
+    memcpy(Jqq,L,data->numN*data->numN*sizeof(double));
+
+    free(H);free(N);free(J);free(L);
+    return 0;
+
+}
 
 int setdiff(int *vector1, double *vector2, int size1, int size2, int *c){
     int i, j, accum=0, k=0;

@@ -20,4 +20,5 @@ int printData(structData *data, int widthLineas, int heightLineas, int widthCarg
 int loadDataFromFile(char *filenameLineas, char *filenameCargas, char* filenameGen, structData *data);
 int genVector(int *NNP, int initNumber, int finalNumber);
 int setdiff(int *vector1, double *vector2, int size1, int size2, int *c);
-
+int calcularJacobiano(structData *data, double *ybusReal, double *ybusImag, double *Vn, double *An, \
+        double *Jpp, double *Jpq, double *Jqp, double *Jqq, double *Pn, double *Qn);
