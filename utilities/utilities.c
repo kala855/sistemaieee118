@@ -2,6 +2,24 @@
 #include "utilities.h"
 #include <string.h>
 
+int setdiff(int *vector1, double *vector2, int size1, int size2, int *c){
+    int i, j, accum=0, k=0;
+    for (i = 0; i < size1; i++) {
+        for (j = 0; j < size2; j++) {
+            if(vector1[i]!=(int)vector2[j*3])
+                accum++;
+            else
+                break;
+        }
+        if(accum == size2){
+            c[k] = vector1[i];
+            k++;
+        }
+        accum = 0;
+    }
+    return k;
+}
+
 int genVector(int *NNP, int initNumber,int finalNumber){
     int i = initNumber,j=0;
     for (i = initNumber; i <= finalNumber; i++) {

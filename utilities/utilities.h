@@ -19,4 +19,5 @@ int zeros(int size,double *An);
 int printData(structData *data, int widthLineas, int heightLineas, int widthCargas, int heightCargas, int widthGen, int heightGen);
 int loadDataFromFile(char *filenameLineas, char *filenameCargas, char* filenameGen, structData *data);
 int genVector(int *NNP, int initNumber, int finalNumber);
+int setdiff(int *vector1, double *vector2, int size1, int size2, int *c);
 
