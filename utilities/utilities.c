@@ -3,6 +3,24 @@
 #include <string.h>
 #include <math.h>
 
+
+int createJacR(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpp, \
+        double *Jpq, double *Jqp, double *Jqq, double *JacR){
+   // printf("%d %d\n", NumQ, NumP);
+    int i,j;
+    for (i = 0; i < NumP; i++) {
+        for (j = 0; j < NumP; j++) {
+            JacR[i*NumP+j] = Jpp[(NNP[i]-1)*numN+(NNP[j]-1)];
+        }
+    }
+
+    for (i = NumP; i < NumP + NumQ; i++) {
+        //JacR[i*]
+    }
+
+    return 0;
+}
+
 int calcularJacobiano(structData *data, double *ybusReal, double *ybusImag, double *Vn, double *An, \
         double *Jpp, double *Jpq, double *Jqp, double *Jqq, double *Pn, double *Qn){
 
@@ -22,9 +40,9 @@ int calcularJacobiano(structData *data, double *ybusReal, double *ybusImag, doub
         Qn[k] = Qn[k]*Vn[k];
     }
 
-    //for (k = 0; k < data->numN; k++) {
-      //  printf("%.8lf %.8lf\n",Pn[k],Qn[k]);
-   // }
+ //   for (k = 0; k < data->numN; k++) {
+   //     printf("%.4lf\n",Vn[k]);
+    //}
 
     H = (double*)malloc(data->numN*data->numN*sizeof(double));
     N = (double*)malloc(data->numN*data->numN*sizeof(double));
@@ -41,7 +59,7 @@ int calcularJacobiano(structData *data, double *ybusReal, double *ybusImag, doub
             if(k==m){
                 H[k*widthLineas+k] = -ybusImag[k*widthLineas+k]*Vn[k]*Vn[k]-Qn[k];
                 N[k*widthLineas+k] = ybusReal[k*widthLineas+k]*Vn[k] + Pn[k]/Vn[k];
-                J[k*widthLineas+k] = -ybusReal[k*widthLineas+k]*Vn[k] + Pn[k];
+                J[k*widthLineas+k] = -ybusReal[k*widthLineas+k]*Vn[k]*Vn[k] + Pn[k];
                 L[k*widthLineas+k] = -ybusImag[k*widthLineas+k]*Vn[k] + Qn[k]/Vn[k];
             }else{
                 akm = An[k] - An[m];
@@ -124,8 +142,15 @@ int calcularYbus(structData *data, double *ybusReal, double *ybusImag){
         ybusImag[(int) (N1*data->numN + N2)] = ybusImag[(int) (N1*data->numN + N2)] \
                                                - tap*YYImag;
         ybusImag[(int) (N2*data->numN + N1)] = ybusImag[(int) (N2*data->numN + N1)] \
-                                               - tap*tap*YYImag;
+                                               - tap*YYImag;
     }
+
+/*    for (t = 0; t < data->numN; t++) {
+        for (k = 0; k <data->numN; k++) {
+            printf("%.4lf ",ybusReal[(int)(t*data->numN+k)]);
+        }
+        printf("\n");
+    }*/
 
 
     return 0;
@@ -238,6 +263,9 @@ int loadDataFromFile(char *filenameLineas, char *filenameCargas, char *filenameG
         fscanf(datosLineas, "%lf,%lf,%lf,%lf,%lf\n",&data->lineas[i*widthLineas],\
                 &data->lineas[i*widthLineas+1],&data->lineas[i*widthLineas+2],\
                 &data->lineas[i*widthLineas+3],&data->lineas[i*widthLineas+4]);
+        if(data->lineas[i*widthLineas+4]==0)
+            data->lineas[i*widthLineas+4] = 1.0;
+
         data->lineas[i*widthLineas+5] = 1.0;
     }
 

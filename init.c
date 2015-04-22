@@ -34,8 +34,8 @@ int main(){
     genVector(NNP, 2,data->numN);
     int *vector1 = (int*)malloc(data->numN*sizeof(int));
     genVector(vector1, 1, data->numN);
-    int *c = (int *) malloc(data->numN*sizeof(int));
-    int NumQ = setdiff(vector1, data->gen, data->numN, data->numG-1, c);
+    int *NNQ = (int *) malloc(data->numN*sizeof(int));
+    int NumQ = setdiff(vector1, data->gen, data->numN, data->numG, NNQ);
     double *Pref = (double*)malloc(data->numN*sizeof(double));
     double *Qref = (double*)malloc(data->numN*sizeof(double));
     zeros(data->numN,Pref);
@@ -44,7 +44,7 @@ int main(){
     int N1;
 
     for (k = 0; k < data->numG; k++) {
-        N1 = (int) data->gen[k*widthGen+0] -1;
+        N1 = (int) data->gen[k*widthGen+0] - 1;
         Pref[N1] = Pref[N1] + data->gen[k*widthGen+1];
         Vn[N1] = data->gen[k*widthGen+2];
     }
@@ -55,6 +55,7 @@ int main(){
         Qref[N1] = Qref[N1] - data->cargas[k*widthCargas+2];
     }
 
+
     double *dP = (double*)malloc(NumP*sizeof(double));
     double *dQ = (double*)malloc(NumQ*sizeof(double));
 
@@ -64,7 +65,7 @@ int main(){
     int Error = 100;
     int iter = 0;
 
-    double *Jpp, *Jpq, *Jqp, *Jqq, *Pn, *Qn;
+    double *Jpp, *Jpq, *Jqp, *Jqq, *Pn, *Qn, *JacR;
 
     Jpp = (double*)malloc(data->numN*data->numN*sizeof(double));
     Jpq = (double*)malloc(data->numN*data->numN*sizeof(double));
@@ -72,15 +73,34 @@ int main(){
     Jqq = (double*)malloc(data->numN*data->numN*sizeof(double));
     Pn = (double*)malloc(data->numN*sizeof(double));
     Qn = (double*)malloc(data->numN*sizeof(double));
+    JacR = (double*)malloc(220*220*sizeof(double));
 
     while (Error<=100){
         calcularJacobiano(data,ybusReal,ybusImag,Vn,An,Jpp,Jpq,Jqp,Jqq,Pn,Qn);
         int i,j;
-        for (i = 0; i < data->numN; i++) {
-            for (j = 0; j < data->numN; j++) {
-                printf("%.4lf ",Jqq[i*(int)data->numN+j]);
+        for (i = 0 ; i < NumP ; i++) {
+            N1 = NNP[i] - 1;
+            dP[i] = Pref[N1] - Pn[N1];
+        }
+
+        for (i = 0; i < NumQ; i++ ) {
+            N1 = NNQ[i] - 1;
+            dQ[i] = Qref[N1] - Qn[N1];
+        }
+
+        createJacR(NNP, NNQ, NumQ, NumP, (int)data->numN, Jpp, Jpq, Jqp, Jqq, JacR);
+
+        for (i = 0; i < NumP; i++) {
+           for (j = 0; j < NumP; j++) {
+               if(j!=NumP-1)
+                   printf("%.4lf ",JacR[i*NumP+j]);
+               else
+                   printf("%.4lf\n",JacR[i*NumP+j]);
+
             }
-            printf("\n");
+
+
+            //printf("%.4lf ",dP[i]);
         }
 
         Error++;
@@ -99,11 +119,12 @@ int main(){
     free(ybusReal);
     free(ybusImag);
     free(NNP);
-    free(c);
+    free(NNQ);
     free(vector1);
     free(dP);
     free(dQ);
     free(Pref);
     free(Qref);
+    free(JacR);
     return res;
 }
