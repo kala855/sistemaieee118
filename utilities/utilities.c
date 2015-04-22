@@ -7,16 +7,45 @@
 int createJacR(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpp, \
         double *Jpq, double *Jqp, double *Jqq, double *JacR){
    // printf("%d %d\n", NumQ, NumP);
-    int i,j;
+    int size = NumP+NumQ;
+    int i,j,k,l;
     for (i = 0; i < NumP; i++) {
         for (j = 0; j < NumP; j++) {
-            JacR[i*NumP+j] = Jpp[(NNP[i]-1)*numN+(NNP[j]-1)];
+            JacR[i*size+j] = Jpp[(NNP[i]-1)*numN+(NNP[j]-1)];
         }
     }
 
-    for (i = NumP; i < NumP + NumQ; i++) {
-        //JacR[i*]
+    k = 0;
+    for (i = 0; i < NumP; i++) {
+        l = NumP;
+        for (j = 0; j < NumQ; j++) {
+            JacR[k*size+l] = Jpq[(NNP[i]-1)*numN+(NNQ[j]-1)];
+            l++;
+        }
+        k++;
     }
+
+    k = NumP;
+    for (i = 0; i < NumQ; i++) {
+        l = 0;
+        for (j = 0; j < NumP; j++) {
+            JacR[k*size+l] = Jqp[(NNQ[i]-1)*numN+(NNP[j]-1)];
+            l++;
+        }
+        k++;
+    }
+
+    k = NumP;
+    for (i = 0; i < NumQ; i++) {
+        l = NumP;
+        for (j = 0; j < NumQ; j++) {
+            JacR[k*size+l] = Jqq[(NNQ[i]-1)*numN+(NNQ[j]-1)];
+            l++;
+        }
+        k++;
+    }
+
+
 
     return 0;
 }

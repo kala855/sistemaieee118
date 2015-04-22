@@ -73,7 +73,7 @@ int main(){
     Jqq = (double*)malloc(data->numN*data->numN*sizeof(double));
     Pn = (double*)malloc(data->numN*sizeof(double));
     Qn = (double*)malloc(data->numN*sizeof(double));
-    JacR = (double*)malloc(220*220*sizeof(double));
+    JacR = (double*)malloc((NumP+NumQ)*(NumP+NumQ)*sizeof(double));
 
     while (Error<=100){
         calcularJacobiano(data,ybusReal,ybusImag,Vn,An,Jpp,Jpq,Jqp,Jqq,Pn,Qn);
@@ -90,12 +90,13 @@ int main(){
 
         createJacR(NNP, NNQ, NumQ, NumP, (int)data->numN, Jpp, Jpq, Jqp, Jqq, JacR);
 
-        for (i = 0; i < NumP; i++) {
-           for (j = 0; j < NumP; j++) {
-               if(j!=NumP-1)
-                   printf("%.4lf ",JacR[i*NumP+j]);
+       int sizeJacR = NumP+NumQ;
+        for (i = 0; i < sizeJacR; i++) {
+           for (j = 0; j < sizeJacR; j++) {
+               if(j!=sizeJacR-1)
+                   printf("%.4lf ",JacR[i*sizeJacR+j]);
                else
-                   printf("%.4lf\n",JacR[i*NumP+j]);
+                   printf("%.4lf\n",JacR[i*sizeJacR+j]);
 
             }
 
