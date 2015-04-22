@@ -4,6 +4,12 @@
 #include <math.h>
 
 
+int createdPdQ(double *dP, double *dQ, int NumP, int NumQ, double *dPdQ){
+    memcpy(dPdQ,dP,sizeof(double)*NumP);
+    memcpy(dPdQ+NumP,dQ,sizeof(double)*NumQ);
+    return 0;
+}
+
 int createJacR(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpp, \
         double *Jpq, double *Jqp, double *Jqq, double *JacR){
    // printf("%d %d\n", NumQ, NumP);

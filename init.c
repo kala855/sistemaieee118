@@ -65,7 +65,7 @@ int main(){
     int Error = 100;
     int iter = 0;
 
-    double *Jpp, *Jpq, *Jqp, *Jqq, *Pn, *Qn, *JacR;
+    double *Jpp, *Jpq, *Jqp, *Jqq, *Pn, *Qn, *JacR, *dPdQ;
 
     Jpp = (double*)malloc(data->numN*data->numN*sizeof(double));
     Jpq = (double*)malloc(data->numN*data->numN*sizeof(double));
@@ -74,6 +74,7 @@ int main(){
     Pn = (double*)malloc(data->numN*sizeof(double));
     Qn = (double*)malloc(data->numN*sizeof(double));
     JacR = (double*)malloc((NumP+NumQ)*(NumP+NumQ)*sizeof(double));
+    dPdQ = (double*)malloc((NumP+NumQ)*sizeof(double));
 
     while (Error<=100){
         calcularJacobiano(data,ybusReal,ybusImag,Vn,An,Jpp,Jpq,Jqp,Jqq,Pn,Qn);
@@ -89,29 +90,33 @@ int main(){
         }
 
         createJacR(NNP, NNQ, NumQ, NumP, (int)data->numN, Jpp, Jpq, Jqp, Jqq, JacR);
+        createdPdQ(dP,dQ,NumP,NumQ,dPdQ);
+        for (i = 0; i < NumP+NumQ; i++) {
+            printf("%.4lf\n",dPdQ[i]);
+        }
 
-       int sizeJacR = NumP+NumQ;
+    /*    int sizeJacR = NumP+NumQ;
         for (i = 0; i < sizeJacR; i++) {
-           for (j = 0; j < sizeJacR; j++) {
-               if(j!=sizeJacR-1)
-                   printf("%.4lf ",JacR[i*sizeJacR+j]);
-               else
-                   printf("%.4lf\n",JacR[i*sizeJacR+j]);
+            for (j = 0; j < sizeJacR; j++) {
+                if(j!=sizeJacR-1)
+                    printf("%.4lf ",JacR[i*sizeJacR+j]);
+                else
+                    printf("%.4lf\n",JacR[i*sizeJacR+j]);
 
             }
 
 
             //printf("%.4lf ",dP[i]);
-        }
+        }*/
 
         Error++;
     }
 
     /*int i;
-    for (i = 0; i < data->numN; i++) {
-        printf("%.4lf %.4lf\n",Pref[i],Qref[i]);
-    }*/
-   // printf("%.5lf\n",Vn[100]);
+      for (i = 0; i < data->numN; i++) {
+      printf("%.4lf %.4lf\n",Pref[i],Qref[i]);
+      }*/
+    // printf("%.5lf\n",Vn[100]);
     //printf("%.5lf\n",data->numN);
     //printData(data,widthLineas, heightLineas, widthCargas, heightCargas, widthGen, heightGen);
     free(data);

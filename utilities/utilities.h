@@ -24,3 +24,4 @@ int calcularJacobiano(structData *data, double *ybusReal, double *ybusImag, doub
         double *Jpp, double *Jpq, double *Jqp, double *Jqq, double *Pn, double *Qn);
 int createJacR(int *NNP, int *NNQ, int NumQ, int NumP, int numN, double *Jpp, \
         double *Jpq, double *Jqp, double *Jqq, double *JacR);
+int createdPdQ(double *dp, double *dq, int NumP, int NumQ, double *dPdQ);
