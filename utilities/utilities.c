@@ -4,6 +4,27 @@
 #include <math.h>
 
 
+double maxAbs(int NumPQ, double *dPdQ){
+    int i;
+    double max = 0.0;
+    for (i = 0; i < NumPQ; i++){
+        if(fabs(dPdQ[i]) > max)
+            max = fabs(dPdQ[i]);
+    }
+    return max;
+}
+
+int transposeJacR(double *JacR,int NumPQ, double *JacRt){
+    int i, j;
+    for ( i = 0; i < NumPQ; i++) {
+        for (j = 0; j < NumPQ; j++) {
+            JacRt[i*NumPQ+j] = JacR[j*NumPQ+i];
+        }
+    }
+    return 0;
+
+}
+
 int createdPdQ(double *dP, double *dQ, int NumP, int NumQ, double *dPdQ){
     memcpy(dPdQ,dP,sizeof(double)*NumP);
     memcpy(dPdQ+NumP,dQ,sizeof(double)*NumQ);

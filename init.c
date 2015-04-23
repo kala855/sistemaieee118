@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "utilities/utilities.h"
+extern void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv,\
+        double* b, int* ldb, int* info );
+
 
 int main(){
-    int res;
+    int res,i,j;
     int widthCargas = 3;
     int widthGen = 3;
     int widthLineas = 6;
@@ -13,7 +17,7 @@ int main(){
     char *fileNameLineas = "../inputs/lineas";
     char *fileNameCargas = "../inputs/cargas";
     char *fileNameGen = "../inputs/gen";
-    double *Vn,*An;
+    double *Vn,*An,t;
     structData *data;
     data = (structData*)malloc(sizeof(structData));
     res = loadDataFromFile(fileNameLineas,fileNameCargas,fileNameGen, data);
@@ -62,10 +66,13 @@ int main(){
     zeros(NumP,dP);
     zeros(NumQ,dQ);
 
-    int Error = 100;
+    double Error = 100.0;
     int iter = 0;
+    int lda = NumP+NumQ,kk;
+    int NumPQ = NumP+NumQ, nrhs = 1;
+    int *ipiv,ldb = NumQ+NumP,info;
 
-    double *Jpp, *Jpq, *Jqp, *Jqq, *Pn, *Qn, *JacR, *dPdQ;
+    double *Jpp, *Jpq, *Jqp, *Jqq, *Pn, *Qn, *JacR, *dPdQ, *JacRt,*dX;
 
     Jpp = (double*)malloc(data->numN*data->numN*sizeof(double));
     Jpq = (double*)malloc(data->numN*data->numN*sizeof(double));
@@ -73,12 +80,14 @@ int main(){
     Jqq = (double*)malloc(data->numN*data->numN*sizeof(double));
     Pn = (double*)malloc(data->numN*sizeof(double));
     Qn = (double*)malloc(data->numN*sizeof(double));
-    JacR = (double*)malloc((NumP+NumQ)*(NumP+NumQ)*sizeof(double));
-    dPdQ = (double*)malloc((NumP+NumQ)*sizeof(double));
+    JacR = (double*)malloc((NumPQ)*(NumPQ)*sizeof(double));
+    dPdQ = (double*)malloc((NumPQ)*sizeof(double));
+    dX = (double*)malloc((NumPQ)*sizeof(double));
+    ipiv = (int*)malloc((NumP+NumQ)*sizeof(int));
+    JacRt = (double*)malloc((NumPQ)*(NumPQ)*sizeof(double));
 
-    while (Error<=100){
+    while (Error>1e-8){
         calcularJacobiano(data,ybusReal,ybusImag,Vn,An,Jpp,Jpq,Jqp,Jqq,Pn,Qn);
-        int i,j;
         for (i = 0 ; i < NumP ; i++) {
             N1 = NNP[i] - 1;
             dP[i] = Pref[N1] - Pn[N1];
@@ -90,35 +99,49 @@ int main(){
         }
 
         createJacR(NNP, NNQ, NumQ, NumP, (int)data->numN, Jpp, Jpq, Jqp, Jqq, JacR);
+        transposeJacR(JacR,NumPQ,JacRt);
         createdPdQ(dP,dQ,NumP,NumQ,dPdQ);
-        for (i = 0; i < NumP+NumQ; i++) {
-            printf("%.4lf\n",dPdQ[i]);
+        memcpy(dX,dPdQ,sizeof(double)*NumPQ);
+        dgesv_(&NumPQ,&nrhs,JacRt,&lda,ipiv,dX,&ldb,&info);
+
+        for (k = 0; k < NumP; k++) {
+            N1 = NNP[k] - 1;
+            An[N1] = An[N1] + dX[k];
         }
 
-    /*    int sizeJacR = NumP+NumQ;
-        for (i = 0; i < sizeJacR; i++) {
-            for (j = 0; j < sizeJacR; j++) {
-                if(j!=sizeJacR-1)
-                    printf("%.4lf ",JacR[i*sizeJacR+j]);
-                else
-                    printf("%.4lf\n",JacR[i*sizeJacR+j]);
+        for (k = 0; k < NumQ; k++) {
+            N1 = NNQ[k] - 1;
+            kk = k + NumP;
+            Vn[N1] = Vn[N1] + dX[kk];
+        }
 
-            }
+       Error = maxAbs(NumPQ,dPdQ);
 
+        if (iter>data->maxIter) {
+            printf("..... No converge despues de %d iteraciones\nError = %lf\n", data->maxIter, Error);
+            break;
+        }
+        iter++;
+//        printf("%.10lf\n",Error);
 
-            //printf("%.4lf ",dP[i]);
-        }*/
-
-        Error++;
     }
 
-    /*int i;
-      for (i = 0; i < data->numN; i++) {
-      printf("%.4lf %.4lf\n",Pref[i],Qref[i]);
-      }*/
-    // printf("%.5lf\n",Vn[100]);
-    //printf("%.5lf\n",data->numN);
-    //printData(data,widthLineas, heightLineas, widthCargas, heightCargas, widthGen, heightGen);
+    int sizeJacR = NumP+NumQ;
+    for (i = 0; i < data->numN; i++) {
+        for (j = 0; j < data->numN; j++) {
+            if(j!=data->numN-1)
+                printf("%.4lf ",Jpq[i*(int)data->numN+j]);
+            else
+                printf("%.4lf\n",Jpq[i*(int)data->numN+j]);
+        }
+
+        //printf("%.4lf ",dP[i]);
+    }
+
+   /* for (i = 0; i < data->numN; i++) {
+        printf("%.4lf %.4lf\n",Pn[i],Qn[i]);
+    }*/
+
     free(data);
     free(Vn);
     free(An);
@@ -132,5 +155,12 @@ int main(){
     free(Pref);
     free(Qref);
     free(JacR);
+    free(ipiv);
+    free(JacRt);
+    free(dX);
+    free(Jpp);
+    free(Jpq);
+    free(Jqp);
+    free(Jqq);
     return res;
 }
