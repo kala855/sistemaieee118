@@ -72,7 +72,7 @@ int main(){
     int NumPQ = NumP+NumQ, nrhs = 1;
     int *ipiv,ldb = NumQ+NumP,info;
 
-    double *Jpp, *Jpq, *Jqp, *Jqq, *Pn, *Qn, *JacR, *dPdQ, *JacRt,*dX;
+    double *Jpp, *Jpq, *Jqp, *Jqq, *Pn, *Qn, *JacR, *dPdQ, *JacRt,*dX, *Ism;
 
     Jpp = (double*)malloc(data->numN*data->numN*sizeof(double));
     Jpq = (double*)malloc(data->numN*data->numN*sizeof(double));
@@ -85,6 +85,9 @@ int main(){
     dX = (double*)malloc((NumPQ)*sizeof(double));
     ipiv = (int*)malloc((NumP+NumQ)*sizeof(int));
     JacRt = (double*)malloc((NumPQ)*(NumPQ)*sizeof(double));
+    Ism = (double*)malloc(data->numL*sizeof(double));
+
+    zeros(data->numL,Ism);
 
     while (Error>1e-8){
         calcularJacobiano(data,ybusReal,ybusImag,Vn,An,Jpp,Jpq,Jqp,Jqq,Pn,Qn);
@@ -122,25 +125,22 @@ int main(){
             break;
         }
         iter++;
-//        printf("%.10lf\n",Error);
-
     }
 
-    int sizeJacR = NumP+NumQ;
-    for (i = 0; i < data->numN; i++) {
-        for (j = 0; j < data->numN; j++) {
-            if(j!=data->numN-1)
-                printf("%.4lf ",Jpq[i*(int)data->numN+j]);
-            else
-                printf("%.4lf\n",Jpq[i*(int)data->numN+j]);
-        }
+    calcCargLineas(data,An,Vn,Ism);
+    printDataToFileVec("ismData",data->numL,Ism);
+    printDataToFileVec("vnData",data->numN,Vn);
+    printDataToFileVec("anData",data->numN,An);
+    printDataToFileVec("pnData",data->numN,Pn);
+    printDataToFileVec("qnData",data->numN,Qn);
+    printDataToFileMat("ybusRealData",data->numN,ybusReal);
+    printDataToFileMat("ybusImagData",data->numN,ybusImag);
 
-        //printf("%.4lf ",dP[i]);
-    }
+    printDataToFileMat("jppData",data->numN,Jpp);
+    printDataToFileMat("jpqData",data->numN,Jpq);
+    printDataToFileMat("jqpData",data->numN,Jqp);
+    printDataToFileMat("jqqData",data->numN,Jqq);
 
-   /* for (i = 0; i < data->numN; i++) {
-        printf("%.4lf %.4lf\n",Pn[i],Qn[i]);
-    }*/
 
     free(data);
     free(Vn);
@@ -162,5 +162,6 @@ int main(){
     free(Jpq);
     free(Jqp);
     free(Jqq);
+    free(Ism);
     return res;
 }

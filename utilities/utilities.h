@@ -27,3 +27,6 @@ int createJacR(int *NNP, int *NNQ, int NumQ, int NumP, int numN, double *Jpp, \
 int createdPdQ(double *dp, double *dq, int NumP, int NumQ, double *dPdQ);
 int transposeJacR(double *JacR,int NumPQ, double *JacRt);
 double maxAbs(int NumPQ, double *dPdQ);
+int calcCargLineas(structData *data,double *An, double *Vn,double *Ism);
+int printDataToFileVec(char *name, int size,double *data);
+int printDataToFileMat(char *name, int size,double *data);

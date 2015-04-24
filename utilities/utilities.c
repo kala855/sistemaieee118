@@ -4,6 +4,23 @@
 #include <math.h>
 
 
+int calcCargLineas(structData *data, double *An, double *Vn, double *Ism){
+    int k, N1, N2;
+    double akm;
+    int widthLineas = 6;
+    for (k = 0; k < data->numL; k++) {
+        N1 = data->lineas[k*widthLineas+0] - 1;
+        N2 = data->lineas[k*widthLineas+1] - 1;
+        akm = An[N1] - An[N2];
+        Ism[k] = sqrt(Vn[N1]*Vn[N1] + Vn[N2]*Vn[N2] - 2*Vn[N1]*Vn[N2]*cos(akm));
+        Ism[k] = Ism[k]/sqrt(data->lineas[k*widthLineas+2]*data->lineas[k*widthLineas+2] + \
+                data->lineas[k*widthLineas+3]*data->lineas[k*widthLineas+3])\
+                 /1.6;//data->lineas[k*widthLineas+6];
+
+    }
+    return 0;
+}
+
 double maxAbs(int NumPQ, double *dPdQ){
     int i;
     double max = 0.0;
@@ -95,10 +112,6 @@ int calcularJacobiano(structData *data, double *ybusReal, double *ybusImag, doub
         Pn[k] = Pn[k]*Vn[k];
         Qn[k] = Qn[k]*Vn[k];
     }
-
- //   for (k = 0; k < data->numN; k++) {
-   //     printf("%.4lf\n",Vn[k]);
-    //}
 
     H = (double*)malloc(data->numN*data->numN*sizeof(double));
     N = (double*)malloc(data->numN*data->numN*sizeof(double));
@@ -200,14 +213,6 @@ int calcularYbus(structData *data, double *ybusReal, double *ybusImag){
         ybusImag[(int) (N2*data->numN + N1)] = ybusImag[(int) (N2*data->numN + N1)] \
                                                - tap*YYImag;
     }
-
-/*    for (t = 0; t < data->numN; t++) {
-        for (k = 0; k <data->numN; k++) {
-            printf("%.4lf ",ybusReal[(int)(t*data->numN+k)]);
-        }
-        printf("\n");
-    }*/
-
 
     return 0;
 
@@ -337,4 +342,35 @@ int loadDataFromFile(char *filenameLineas, char *filenameCargas, char *filenameG
     fclose(datosGen);
     fclose(datosCargas);
     return 0;
+}
+
+int printDataToFileVec(char *name, int size,double *data){
+    FILE *dato;
+    dato = fopen(name,"w");
+    int i;
+    for (i = 0; i < size; i++) {
+        fprintf(dato,"%.4lf\n",data[i]);
+    }
+    fclose(dato);
+    return 0;
+
+}
+
+int printDataToFileMat(char *name, int size,double *data){
+    FILE *dato;
+    dato = fopen(name,"w");
+    int i,j;
+    for (i = 0; i < size; i++) {
+        for (j = 0; j < size; j++) {
+            if(j!=size-1)
+                fprintf(dato,"%.4lf ",data[i*size+j]);
+            else
+                fprintf(dato,"%.4lf\n",data[i*size+j]);
+        }
+
+    }
+
+    fclose(dato);
+    return 0;
+
 }
