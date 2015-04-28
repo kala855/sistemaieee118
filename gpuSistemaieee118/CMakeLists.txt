@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 2.8)
+project(CUDA_SISTEMA_IEEE_FC_118)
+find_package(CUDA REQUIRED)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -arch=compute_52)
+cuda_add_executable(CUDA_SISTEMA_IEEE_FC_118 init.cu)
+target_link_libraries(CUDA_SISTEMA_IEEE_FC_118 utilities cusolverUtilities m ${CUDA_cusolver_LIBRARY})
+add_subdirectory(utilities)

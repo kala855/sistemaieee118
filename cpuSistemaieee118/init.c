@@ -14,9 +14,9 @@ int main(){
     int heightCargas = 83;
     int heightGen = 15;
     int heightLineas = 186, NumP;
-    char *fileNameLineas = "../inputs/lineas";
-    char *fileNameCargas = "../inputs/cargas";
-    char *fileNameGen = "../inputs/gen";
+    char *fileNameLineas = "../../inputs/lineas";
+    char *fileNameCargas = "../../inputs/cargas";
+    char *fileNameGen = "../../inputs/gen";
     double *Vn,*An,t;
     structData *data;
     data = (structData*)malloc(sizeof(structData));
