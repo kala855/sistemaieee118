@@ -74,6 +74,7 @@ int main(){
     int *ipiv,ldb = NumQ+NumP,info;
 
     double *Jpp, *Jpq, *Jqp, *Jqq, *Pn, *Qn, *JacR, *dPdQ, *JacRt,*dX, *Ism;
+    double *d_Jpp, *d_Jpq, *d_Jqp, *d_Jqq, *d_Pn, *d_Qn, *d_ybusReal, *d_ybusImag, *d_Vn, *d_An;
     double *d_dX, *d_JacRt, *d_work;
     int *devIpiv;
 
@@ -94,6 +95,22 @@ int main(){
     int lwork =0, *devInfo;
     gpuErrchk(cudaMalloc(&devInfo, sizeof(int)));
 
+
+    gpuErrchk(cudaMalloc(&d_ybusImag,data->numN*data->numN*sizeof(double)));
+    gpuErrchk(cudaMalloc(&d_ybusReal,data->numN*data->numN*sizeof(double)));
+    gpuErrchk(cudaMalloc(&d_Qn,data->numN*sizeof(double)));
+    gpuErrchk(cudaMalloc(&d_Pn,data->numN*sizeof(double)));
+    gpuErrchk(cudaMalloc(&d_Jpp,data->numN*data->numN*sizeof(double)));
+    gpuErrchk(cudaMalloc(&d_Jqp,data->numN*data->numN*sizeof(double)));
+    gpuErrchk(cudaMalloc(&d_Jpq,data->numN*data->numN*sizeof(double)));
+    gpuErrchk(cudaMalloc(&d_Jqq,data->numN*data->numN*sizeof(double)));
+    gpuErrchk(cudaMalloc(&d_Vn,data->numN*sizeof(double)));
+    gpuErrchk(cudaMalloc(&d_An,data->numN*sizeof(double)));
+
+    // ---- Copy ybusData to GPU ----//
+    gpuErrchk(cudaMemcpy(d_ybusReal,ybusReal,sizeof(double)*data->numN*data->numN,cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_ybusImag,ybusImag,sizeof(double)*data->numN*data->numN,cudaMemcpyHostToDevice));
+
     // ---- cuSolver initialization ---- //
     cusolverStatus_t solvStatus = CUSOLVER_STATUS_SUCCESS;
     cusolverDnHandle_t handle;
@@ -113,8 +130,56 @@ int main(){
 
     zeros(data->numL,Ism);
 
-    while (Error>1e-8){
-        calcularJacobiano(data,ybusReal,ybusImag,Vn,An,Jpp,Jpq,Jqp,Jqq,Pn,Qn);
+    int blockSize = 32;
+    dim3 dimBlock(blockSize,1,1);
+    dim3 dimGrid(ceil(data->numN/float(blockSize)),1,1);
+
+    dim3 dimBlock2(blockSize,blockSize,1);
+    dim3 dimGrid2(ceil(data->numN/float(blockSize)),ceil(data->numN/float(blockSize)),1);
+
+    t = 0;
+   while (Error>1e-8){
+         // ---- Copy Vn, An data to GPU ----//
+
+       zeros(data->numN*data->numN,Jpp);
+       zeros(data->numN*data->numN,Jpq);
+       zeros(data->numN*data->numN,Jqp);
+       zeros(data->numN*data->numN,Jqq);
+
+        gpuErrchk(cudaMemcpy(d_Vn,Vn,sizeof(double)*data->numN,cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(d_An,An,sizeof(double)*data->numN,cudaMemcpyHostToDevice));
+
+        gpuErrchk(cudaMemcpy(d_Jpp,Vn,sizeof(double)*data->numN*data->numN,cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(d_Jqp,Vn,sizeof(double)*data->numN*data->numN,cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(d_Jpq,Vn,sizeof(double)*data->numN*data->numN,cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(d_Jqq,Vn,sizeof(double)*data->numN*data->numN,cudaMemcpyHostToDevice));
+
+       //calcularJacobiano(data,ybusReal,ybusImag,Vn,An,Jpp,Jpq,Jqp,Jqq,Pn,Qn);
+        d_calcularJacobiano_1<<<dimGrid,dimBlock>>>(data->numN, d_ybusReal, d_ybusImag,d_Vn,d_An,d_Pn,d_Qn);
+        cudaDeviceSynchronize();
+        d_calcularJacobiano_2<<<dimGrid2,dimBlock2>>>(data->numN, d_ybusReal, d_ybusImag, d_Vn,d_An, d_Pn,d_Qn, d_Jpp, d_Jpq, d_Jqp, d_Jqq);
+        cudaDeviceSynchronize();
+
+        gpuErrchk(cudaMemcpy(Pn,d_Pn,sizeof(double)*data->numN,cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaMemcpy(Qn,d_Qn,sizeof(double)*data->numN,cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaMemcpy(Jpp,d_Jpp,sizeof(double)*data->numN*data->numN,cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaMemcpy(Jpq,d_Jpq,sizeof(double)*data->numN*data->numN,cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaMemcpy(Jqp,d_Jqp,sizeof(double)*data->numN*data->numN,cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaMemcpy(Jqq,d_Jqq,sizeof(double)*data->numN*data->numN,cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaMemcpy(An,d_An,sizeof(double)*data->numN,cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaMemcpy(Vn,d_Vn,sizeof(double)*data->numN,cudaMemcpyDeviceToHost));
+
+        if(t==0)
+        {
+            printDataToFileVec("pnData",data->numN,Pn);
+            printDataToFileMat("jppData",data->numN,Jpp);
+            printDataToFileMat("jpqData",data->numN,Jpq);
+            printDataToFileMat("jqpData",data->numN,Jqp);
+            printDataToFileMat("jqqData",data->numN,Jqq);
+
+            printDataToFileVec("qnData",data->numN,Qn);
+            t=1;
+        }
         for (i = 0 ; i < NumP ; i++) {
             N1 = NNP[i] - 1;
             dP[i] = Pref[N1] - Pn[N1];
@@ -160,15 +225,15 @@ int main(){
     printDataToFileVec("ismData",data->numL,Ism);
     printDataToFileVec("vnData",data->numN,Vn);
     printDataToFileVec("anData",data->numN,An);
-    printDataToFileVec("pnData",data->numN,Pn);
-    printDataToFileVec("qnData",data->numN,Qn);
+   // printDataToFileVec("pnData",data->numN,Pn);
+   // printDataToFileVec("qnData",data->numN,Qn);
     printDataToFileMat("ybusRealData",data->numN,ybusReal);
     printDataToFileMat("ybusImagData",data->numN,ybusImag);
 
-    printDataToFileMat("jppData",data->numN,Jpp);
+/*    printDataToFileMat("jppData",data->numN,Jpp);
     printDataToFileMat("jpqData",data->numN,Jpq);
     printDataToFileMat("jqpData",data->numN,Jqp);
-    printDataToFileMat("jqqData",data->numN,Jqq);
+    printDataToFileMat("jqqData",data->numN,Jqq);*/
 
 
     cusolverDnDestroy(handle);
@@ -193,9 +258,17 @@ int main(){
     free(Jqp);
     free(Jqq);
     free(Ism);
+    cudaFree(d_ybusReal);
+    cudaFree(d_ybusImag);
     cudaFree(d_work);
     cudaFree(d_JacRt);
     cudaFree(devIpiv);
     cudaFree(d_work);
+    cudaFree(d_Jpp);
+    cudaFree(d_Jqq);
+    cudaFree(d_Jpq);
+    cudaFree(d_Jqp);
+    cudaFree(d_Vn);
+    cudaFree(d_An);
     return res;
 }

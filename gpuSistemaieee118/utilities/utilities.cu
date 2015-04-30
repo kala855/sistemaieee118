@@ -94,6 +94,80 @@ int createJacR(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpp, \
     return 0;
 }
 
+
+__global__ void d_zeros(int size,double *An){
+    int i = blockIdx.x*blockDim.x+threadIdx.x;
+    if(i < size) {
+        An[i] = 0.0;
+    }
+}
+
+__global__ void d_ones(int size,double *Vn){
+    int i = blockIdx.x*blockDim.x+threadIdx.x;
+    if( i < size){
+        Vn[i] = 1.0;
+    }
+}
+
+
+
+/*Esta funcion permite actualizar los valores de Pn y Qn que posteriormente serán usados
+ para el cálculo completo del Jacobiano*/
+__global__ void d_calcularJacobiano_1(int numN, double *ybusReal, double *ybusImag, double *Vn, \
+        double *An, double *Pn, double *Qn){
+    int k = blockIdx.x*blockDim.x+threadIdx.x;
+    int widthLineas = numN;
+    int m;
+    double akm;
+    if (k<numN){
+        Pn[k] = 0.0;
+        Qn[k] = 0.0;
+        for (m = 0; m < numN; m++){
+            akm = An[k] - An[m];
+            Pn[k] = Pn[k] + Vn[m]*(ybusReal[k*widthLineas+m]*cos(akm) + \
+                    ybusImag[k*widthLineas+m]*sin(akm));
+            Qn[k] = Qn[k] - Vn[m]*(ybusImag[k*widthLineas+m]*cos(akm) - \
+                    ybusReal[k*widthLineas+m]*sin(akm));
+
+        }
+        Pn[k] = Pn[k]*Vn[k];
+        Qn[k] = Qn[k]*Vn[k];
+    }
+
+
+}
+
+__global__ void d_calcularJacobiano_2(int numN, double *ybusReal, double *ybusImag, double *Vn,\
+        double *An,double *Pn, double *Qn, double *Jpp, double *Jpq, double *Jqp, double *Jqq){
+
+    int k = blockIdx.y*blockDim.y+threadIdx.y;
+    int m = blockIdx.x*blockDim.x+threadIdx.x;
+    int widthLineas = numN;
+    double akm;
+    if(k<numN){
+        if(m<numN)
+            /*Jpp[k*widthLineas+m] = 0.0;
+            Jpq[k*widthLineas+m] = 0.0;
+            Jqp[k*widthLineas+m] = 0.0;
+            Jqq[k*widthLineas+m] = 0.0;*/
+
+            if(k==m){
+                Jpp[k*widthLineas+k] = -ybusImag[k*widthLineas+k]*Vn[k]*Vn[k]-Qn[k];
+                Jpq[k*widthLineas+k] = ybusReal[k*widthLineas+k]*Vn[k] + Pn[k]/Vn[k];
+                Jqp[k*widthLineas+k] = -ybusReal[k*widthLineas+k]*Vn[k]*Vn[k] + Pn[k];
+                Jqq[k*widthLineas+k] = -ybusImag[k*widthLineas+k]*Vn[k] + Qn[k]/Vn[k];
+            }else{
+                akm = An[k] - An[m];
+                Jpp[k*widthLineas+m] = Vn[k]*Vn[m]*(ybusReal[k*widthLineas+m]*sin(akm)- \
+                        ybusImag[k*widthLineas+m]*cos(akm)) ;
+                Jpq[k*widthLineas+m] = Vn[k]*(ybusReal[k*widthLineas+m]*cos(akm)+ybusImag[k*widthLineas+m]*sin(akm));
+                Jqp[k*widthLineas+m] = -Jpq[k*widthLineas+m]*Vn[m];
+                Jqq[k*widthLineas+m] = Jpp[k*widthLineas+m]/Vn[m];
+            }
+    }
+
+}
+
 int calcularJacobiano(structData *data, double *ybusReal, double *ybusImag, double *Vn, double *An, \
         double *Jpp, double *Jpq, double *Jqp, double *Jqq, double *Pn, double *Qn){
 

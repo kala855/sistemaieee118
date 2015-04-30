@@ -30,3 +30,10 @@ double maxAbs(int NumPQ, double *dPdQ);
 int calcCargLineas(structData *data,double *An, double *Vn,double *Ism);
 int printDataToFileVec(char *name, int size,double *data);
 int printDataToFileMat(char *name, int size,double *data);
+__global__ void d_zeros(int size,double *An);
+__global__ void d_ones(int size,double *Vn);
+__global__ void d_calcularJacobiano_1(int numN, double *ybusReal, double *ybusImag, double *Vn, \
+        double *An, double *Pn, double *Qn);
+__global__ void d_calcularJacobiano_2(int numN, double *ybusReal, double *ybusImag, double *Vn,\
+        double *An,double *Pn, double *Qn, double *Jpp, double *Jpq, double *Jqp, double *Jqq);
+
