@@ -109,6 +109,23 @@ __global__ void d_ones(int size,double *Vn){
     }
 }
 
+__global__ void dp_compute(int NumP,int *NNP, double *Pref, double *Pn, double *dP){
+    int i = blockIdx.x*blockDim.x+threadIdx.x;
+    int N1;
+    if(i<NumP){
+        N1 = NNP[i] - 1;
+        dP[i] = Pref[N1] - Pn[N1];
+    }
+}
+
+__global__ void dq_compute(int NumQ,int *NNQ, double *Qref, double *Qn,double *dQ){
+    int i = blockIdx.x*blockDim.x+threadIdx.x;
+    int N1;
+    if(i<NumQ){
+        N1 = NNQ[i] - 1;
+        dQ[i] = Qref[N1] - Qn[N1];
+    }
+}
 
 
 /*Esta funcion permite actualizar los valores de Pn y Qn que posteriormente serán usados
