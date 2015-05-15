@@ -232,13 +232,13 @@ int main(){
         d_createJacR_3<<<dimGrid7,dimBlock>>>(d_NNP, d_NNQ, NumQ, NumP,(int)(data->numN), d_Jqp, \
                 d_JacR);
         cudaDeviceSynchronize();
-       /*d_createJacR_4<<<dimGrid5,dimBlock>>>(d_NNQ, NumQ, NumP,(int)(data->numN),\
+        d_createJacR_4<<<dimGrid5,dimBlock>>>(d_NNQ, NumQ, NumP,(int)(data->numN),\
                 d_Jqq, d_JacR);
-        cudaDeviceSynchronize();*/
+        cudaDeviceSynchronize();
         gpuErrchk(cudaMemcpy(JacR,d_JacR,sizeof(double)*NumPQ*NumPQ,cudaMemcpyDeviceToHost));
 
 
-        createJacR(NNP, NNQ, NumQ, NumP, (int)data->numN, Jpp, Jpq, Jqp, Jqq, JacR);
+       // createJacR(NNP, NNQ, NumQ, NumP, (int)data->numN, Jpp, Jpq, Jqp, Jqq, JacR);
         transposeJacR(JacR,NumPQ,JacRt);
         createdPdQ(dP,dQ,NumP,NumQ,dPdQ);
         cudaMemcpy(d_dX,dPdQ,sizeof(double)*NumPQ,cudaMemcpyHostToDevice);

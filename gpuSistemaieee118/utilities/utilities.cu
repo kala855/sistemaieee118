@@ -144,32 +144,32 @@ __global__ void d_createJacR_2(int *NNP, int *NNQ, int NumQ, int NumP, int numN,
     int i = blockIdx.x*blockDim.x+threadIdx.x;
     int size = NumP+NumQ;
     int j = 0;
-    int k = 0,l;
+    int k = i,l;
     if(i<NumP){
         l = NumP;
         for(j=0; j<NumQ; j++){
             JacR[k*size+l] = Jpq[(NNP[i]-1)*numN+(NNQ[j]-1)];
             l++;
         }
-        k++;
+        //k++;
     }
 }
 
 
 
-__global__ void d_createJacR_3(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpq, \
+__global__ void d_createJacR_3(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jqp, \
         double *JacR){
     int i = blockIdx.x*blockDim.x+threadIdx.x;
     int j = 0;
-    int k = NumP,l;
+    int k = NumP+i,l;
     int size = NumP+NumQ;
-    if(i<NumP){
+    if(i<NumQ){
         l = 0;
-        for(j=0; j<NumQ; j++){
-            JacR[k*size+l] = Jpq[(NNP[i]-1)*numN+(NNQ[j]-1)];
+        for(j=0; j<NumP; j++){
+            JacR[k*size+l] = Jqp[(NNQ[i]-1)*numN+(NNP[j]-1)];
             l++;
         }
-        k++;
+        //k++;
     }
 }
 
@@ -179,10 +179,9 @@ __global__ void d_createJacR_4(int *NNQ, int NumQ, int NumP, int numN, double *J
     int i = blockIdx.x*blockDim.x+threadIdx.x;
     int size = NumP+NumQ;
     int j = 0;
-    int k = NumP,l;
+    int k = NumP+i,l;
     if(i<NumQ){
         l = NumP;
-        k = k + i;
         for(j=0; j<NumQ; j++){
             JacR[k*size+l] = Jqq[(NNQ[i]-1)*numN+(NNQ[j]-1)];
             l++;
