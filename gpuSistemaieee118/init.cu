@@ -91,7 +91,7 @@ int main(){
 
     double *Jpp, *Jpq, *Jqp, *Jqq, *Pn, *Qn, *JacR, *dPdQ, *JacRt,*dX, *Ism;
     double *d_Jpp, *d_Jpq, *d_Jqp, *d_Jqq, *d_Pn, *d_Qn, *d_ybusReal, *d_ybusImag, *d_Vn, *d_An;
-    double *d_dX, *d_JacRt, *d_work, *d_dP, *d_dQ, *d_Pref, *d_Qref;
+    double *d_dX, *d_JacRt, *d_work, *d_dP, *d_dQ, *d_Pref, *d_Qref, *d_JacR;
     int *devIpiv, *d_NNP, *d_NNQ;
 
     Jpp = (double*)malloc(data->numN*data->numN*sizeof(double));
@@ -128,6 +128,7 @@ int main(){
     gpuErrchk(cudaMalloc(&d_Qref,(data->numN)*sizeof(double)));
     gpuErrchk(cudaMalloc(&d_NNP,((data->numN)-1)*sizeof(int)));
     gpuErrchk(cudaMalloc(&d_NNQ,(data->numN)*sizeof(int)));
+    gpuErrchk(cudaMalloc(&d_JacR,NumPQ*NumPQ*sizeof(double)));
 
 
     // ---- Copy ybusData to GPU ----//
@@ -172,6 +173,8 @@ int main(){
     dim3 dimGrid3(ceil((data->numN*data->numN)/float(blockSize)),1,1);
     dim3 dimGrid4(ceil(NumP/float(blockSize)),1,1);
     dim3 dimGrid5(ceil(NumQ/float(blockSize)),1,1);
+    dim3 dimGrid6(ceil(NumP/float(blockSize)), ceil(NumP/float(blockSize)));
+    dim3 dimGrid7(ceil(NumP/float(blockSize)),1,1);
 
     t = 0;
     while (Error>1e-8){
@@ -219,6 +222,22 @@ int main(){
         dq_compute<<<dimGrid5,dimBlock>>>(NumP, d_NNQ, d_Qref, d_Qn, d_dQ);
         gpuErrchk(cudaMemcpy(dQ,d_dQ,sizeof(double)*NumQ,cudaMemcpyDeviceToHost));
 
+        //Se esta copiando JacR del Host al device. OJO
+        gpuErrchk(cudaMemcpy(d_JacR,JacR,sizeof(double)*NumPQ*NumPQ,cudaMemcpyHostToDevice));
+        d_createJacR_1<<<dimGrid6,dimBlock2>>>(d_NNP, NumQ, NumP, (int)(data->numN), d_Jpp, d_JacR);
+        cudaDeviceSynchronize();
+        d_createJacR_2<<<dimGrid7,dimBlock>>>(d_NNP, d_NNQ, NumQ, NumP, (int)(data->numN), d_Jpq, \
+                d_JacR);
+        cudaDeviceSynchronize();
+        d_createJacR_3<<<dimGrid7,dimBlock>>>(d_NNP, d_NNQ, NumQ, NumP,(int)(data->numN), d_Jqp, \
+                d_JacR);
+        cudaDeviceSynchronize();
+       /*d_createJacR_4<<<dimGrid5,dimBlock>>>(d_NNQ, NumQ, NumP,(int)(data->numN),\
+                d_Jqq, d_JacR);
+        cudaDeviceSynchronize();*/
+        gpuErrchk(cudaMemcpy(JacR,d_JacR,sizeof(double)*NumPQ*NumPQ,cudaMemcpyDeviceToHost));
+
+
         createJacR(NNP, NNQ, NumQ, NumP, (int)data->numN, Jpp, Jpq, Jqp, Jqq, JacR);
         transposeJacR(JacR,NumPQ,JacRt);
         createdPdQ(dP,dQ,NumP,NumQ,dPdQ);
@@ -261,7 +280,7 @@ int main(){
     printDataToFileMat("ybusRealData",data->numN,ybusReal);
     printDataToFileMat("ybusImagData",data->numN,ybusImag);
 
-    /*    printDataToFileMat("jppData",data->numN,Jpp);
+       /* printDataToFileMat("jppData",data->numN,Jpp);
           printDataToFileMat("jpqData",data->numN,Jpq);
           printDataToFileMat("jqpData",data->numN,Jqp);
           printDataToFileMat("jqqData",data->numN,Jqq);*/
@@ -305,5 +324,6 @@ int main(){
     cudaFree(d_Qref);
     cudaFree(d_dP);
     cudaFree(d_dQ);
+    cudaFree(d_JacR);
     return res;
 }

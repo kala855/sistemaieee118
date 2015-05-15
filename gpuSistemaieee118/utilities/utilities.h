@@ -38,3 +38,9 @@ __global__ void d_calcularJacobiano_2(int numN, double *ybusReal, double *ybusIm
         double *An,double *Pn, double *Qn, double *Jpp, double *Jpq, double *Jqp, double *Jqq);
 __global__ void dp_compute(int NumP,int *NNP, double *Pref, double *Pn, double *dP);
 __global__ void dq_compute(int NumQ,int *NNQ, double *Qref, double *Qn, double *dQ);
+__global__ void d_createJacR_1(int *NNP, int NumQ, int NumP,int numN, double *Jpp, double *JacR);
+__global__ void d_createJacR_2(int *NNP, int *NNQ, int NumQ, int NumP, int numN, double *Jpq, \
+        double *JacR);
+__global__ void d_createJacR_3(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpq, \
+        double *JacR);
+__global__ void d_createJacR_4(int *NNQ, int NumQ, int NumP, int numN, double *Jqq, double *JacR);

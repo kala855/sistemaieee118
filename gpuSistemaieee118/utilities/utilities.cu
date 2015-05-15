@@ -53,7 +53,7 @@ int createJacR(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpp, \
    // printf("%d %d\n", NumQ, NumP);
     int size = NumP+NumQ;
     int i,j,k,l;
-    for (i = 0; i < NumP; i++) {
+    /*for (i = 0; i < NumP; i++) {
         for (j = 0; j < NumP; j++) {
             JacR[i*size+j] = Jpp[(NNP[i]-1)*numN+(NNP[j]-1)];
         }
@@ -69,7 +69,7 @@ int createJacR(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpp, \
         k++;
     }
 
-    k = NumP;
+  k = NumP;
     for (i = 0; i < NumQ; i++) {
         l = 0;
         for (j = 0; j < NumP; j++) {
@@ -77,7 +77,7 @@ int createJacR(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpp, \
             l++;
         }
         k++;
-    }
+    }*/
 
     k = NumP;
     for (i = 0; i < NumQ; i++) {
@@ -127,6 +127,68 @@ __global__ void dq_compute(int NumQ,int *NNQ, double *Qref, double *Qn,double *d
     }
 }
 
+
+
+__global__ void d_createJacR_1(int *NNP, int NumQ, int NumP, int numN, double *Jpp, double *JacR){
+    int i = blockIdx.y*blockDim.y+threadIdx.y;
+    int j = blockIdx.x*blockDim.x+threadIdx.x;
+    int size = NumP+NumQ;
+    if((i<NumP) && (j<NumP)){
+        JacR[i*size+j] =  Jpp[(NNP[i]-1)*numN+(NNP[j]-1)];
+    }
+}
+
+
+__global__ void d_createJacR_2(int *NNP, int *NNQ, int NumQ, int NumP, int numN, double *Jpq, \
+        double *JacR){
+    int i = blockIdx.x*blockDim.x+threadIdx.x;
+    int size = NumP+NumQ;
+    int j = 0;
+    int k = 0,l;
+    if(i<NumP){
+        l = NumP;
+        for(j=0; j<NumQ; j++){
+            JacR[k*size+l] = Jpq[(NNP[i]-1)*numN+(NNQ[j]-1)];
+            l++;
+        }
+        k++;
+    }
+}
+
+
+
+__global__ void d_createJacR_3(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpq, \
+        double *JacR){
+    int i = blockIdx.x*blockDim.x+threadIdx.x;
+    int j = 0;
+    int k = NumP,l;
+    int size = NumP+NumQ;
+    if(i<NumP){
+        l = 0;
+        for(j=0; j<NumQ; j++){
+            JacR[k*size+l] = Jpq[(NNP[i]-1)*numN+(NNQ[j]-1)];
+            l++;
+        }
+        k++;
+    }
+}
+
+
+
+__global__ void d_createJacR_4(int *NNQ, int NumQ, int NumP, int numN, double *Jqq, double *JacR){
+    int i = blockIdx.x*blockDim.x+threadIdx.x;
+    int size = NumP+NumQ;
+    int j = 0;
+    int k = NumP,l;
+    if(i<NumQ){
+        l = NumP;
+        k = k + i;
+        for(j=0; j<NumQ; j++){
+            JacR[k*size+l] = Jqq[(NNQ[i]-1)*numN+(NNQ[j]-1)];
+            l++;
+        }
+    }
+}
 
 /*Esta funcion permite actualizar los valores de Pn y Qn que posteriormente serán usados
  para el cálculo completo del Jacobiano*/
