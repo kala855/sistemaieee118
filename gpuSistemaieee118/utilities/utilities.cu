@@ -48,52 +48,59 @@ int createdPdQ(double *dP, double *dQ, int NumP, int NumQ, double *dPdQ){
     return 0;
 }
 
-int createJacR(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpp, \
-        double *Jpq, double *Jqp, double *Jqq, double *JacR){
-   // printf("%d %d\n", NumQ, NumP);
-    int size = NumP+NumQ;
-    int i,j,k,l;
-    /*for (i = 0; i < NumP; i++) {
-        for (j = 0; j < NumP; j++) {
-            JacR[i*size+j] = Jpp[(NNP[i]-1)*numN+(NNP[j]-1)];
-        }
+
+
+__global__ void d_calc_An(double *dX, int *NNP, int NumP, double *An){
+    int k = blockIdx.x*blockDim.x+threadIdx.x;
+    int N1;
+    if (k<NumP) {
+        N1 = NNP[k] - 1;
+        An[N1] = An[N1] + dX[k];
     }
-
-    k = 0;
-    for (i = 0; i < NumP; i++) {
-        l = NumP;
-        for (j = 0; j < NumQ; j++) {
-            JacR[k*size+l] = Jpq[(NNP[i]-1)*numN+(NNQ[j]-1)];
-            l++;
-        }
-        k++;
-    }
-
-  k = NumP;
-    for (i = 0; i < NumQ; i++) {
-        l = 0;
-        for (j = 0; j < NumP; j++) {
-            JacR[k*size+l] = Jqp[(NNQ[i]-1)*numN+(NNP[j]-1)];
-            l++;
-        }
-        k++;
-    }*/
-
-    k = NumP;
-    for (i = 0; i < NumQ; i++) {
-        l = NumP;
-        for (j = 0; j < NumQ; j++) {
-            JacR[k*size+l] = Jqq[(NNQ[i]-1)*numN+(NNQ[j]-1)];
-            l++;
-        }
-        k++;
-    }
-
-
-
-    return 0;
 }
 
+__global__ void d_calc_Vn(double *dX, int *NNQ, int NumP, int NumQ, double *Vn){
+    int k = blockIdx.x*blockDim.x+threadIdx.x;
+    int kk, N1;
+    if (k<NumQ) {
+        N1 = NNQ[k] - 1;
+        kk = k + NumP;
+        Vn[N1] = Vn[N1] + dX[kk];
+    }
+}
+
+
+__global__ void d_fill_d_dx(double *d_dPdQ, int NumPQ, double *d_dX){
+    int i = blockIdx.x*blockDim.x+threadIdx.x;
+    if(i<NumPQ){
+        d_dX[i] = d_dPdQ[i];
+    }
+}
+
+
+__global__ void d_filldPdQ1(double *d_dP, int NumP, double *d_dPdQ){
+    int i = blockIdx.x*blockDim.x+threadIdx.x;
+    if(i<NumP){
+        d_dPdQ[i] = d_dP[i];
+    }
+}
+
+
+
+__global__ void d_filldPdQ(double *d_dQ, int NumQ, int NumP, double *d_dPdQ){
+    int i = blockIdx.x*blockDim.x+threadIdx.x;
+    if(i<NumQ){
+        d_dPdQ[i+NumP] = d_dQ[i];
+    }
+}
+
+__global__ void d_transposeJacr(double *JacR,int NumPQ, double *JacRt){
+    int i = blockIdx.y*blockDim.y+threadIdx.y;
+    int j = blockIdx.x*blockDim.x+threadIdx.x;
+    if(i<NumPQ && j <NumPQ)
+        JacRt[i*NumPQ+j] = JacR[j*NumPQ+i];
+
+}
 
 __global__ void d_zeros(int size,double *An){
     int i = blockIdx.x*blockDim.x+threadIdx.x;

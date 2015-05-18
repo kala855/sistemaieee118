@@ -44,3 +44,9 @@ __global__ void d_createJacR_2(int *NNP, int *NNQ, int NumQ, int NumP, int numN,
 __global__ void d_createJacR_3(int *NNP, int *NNQ, int NumQ, int NumP, int numN,double *Jpq, \
         double *JacR);
 __global__ void d_createJacR_4(int *NNQ, int NumQ, int NumP, int numN, double *Jqq, double *JacR);
+__global__ void d_transposeJacr(double *JacR,int NumPQ, double *JacRt);
+__global__ void d_filldPdQ(double *d_dQ, int NumQ, int NumP, double *d_dPdQ);
+__global__ void d_filldPdQ1(double *d_dP, int NumP, double *d_dPdQ);
+__global__ void d_fill_d_dx(double *d_dPdQ, int NumPQ, double *d_dX);
+__global__ void d_calc_An(double *dX, int *NNP, int NumP, double *An);
+__global__ void d_calc_Vn(double *dX, int *NNQ, int NumP, int NumQ, double *Vn);

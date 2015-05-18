@@ -88,20 +88,8 @@ int main(){
     Ism = (double*)malloc(data->numL*sizeof(double));
 
     zeros(data->numL,Ism);
-t = 0;
     while (Error>1e-8){
         calcularJacobiano(data,ybusReal,ybusImag,Vn,An,Jpp,Jpq,Jqp,Jqq,Pn,Qn);
-
-        if(t==0){
-            printDataToFileVec("pnData",data->numN,Pn);
-            printDataToFileMat("jppData",data->numN,Jpp);
-            printDataToFileMat("jpqData",data->numN,Jpq);
-            printDataToFileMat("jqpData",data->numN,Jqp);
-            printDataToFileMat("jqqData",data->numN,Jqq);
-
-            printDataToFileVec("qnData",data->numN,Qn);
-            t = 1;
-        }
 
         for (i = 0 ; i < NumP ; i++) {
             N1 = NNP[i] - 1;
@@ -143,16 +131,6 @@ t = 0;
     printDataToFileVec("ismData",data->numL,Ism);
     printDataToFileVec("vnData",data->numN,Vn);
     printDataToFileVec("anData",data->numN,An);
-   // printDataToFileVec("pnData",data->numN,Pn);
-   // printDataToFileVec("qnData",data->numN,Qn);
-    printDataToFileMat("ybusRealData",data->numN,ybusReal);
-    printDataToFileMat("ybusImagData",data->numN,ybusImag);
-
-   // printDataToFileMat("jppData",data->numN,Jpp);
-   // printDataToFileMat("jpqData",data->numN,Jpq);
-   // printDataToFileMat("jqpData",data->numN,Jqp);
-   // printDataToFileMat("jqqData",data->numN,Jqq);
-
 
     free(data);
     free(Vn);
