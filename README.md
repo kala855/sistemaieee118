@@ -12,6 +12,18 @@ Con este paso se obtendrán todos los archivos fuente y de entrada que necesita 
     cd build
     cmake ..
     make
-    ./CUDA_SISTEMA_IEEE_FC_118
 
 Con estos sencillos pasos [cmake](http://www.cmake.org/) buscará las dependencias y verá que se puedan cumplir, en caso negativo se le informará al usuario para que proceda con la instalación de las librerías necesarias.
+
+### Ejecución
+Al ejecutar el código:
+
+    ./CUDA_SISTEMA_IEEE_FC_118
+    
+Se obtendrán tres archivos de salida:
+
+    anData
+    ismData
+    vnData
+    
+Estos archivos fueron utilizados para comparar los resultados y determinar que el algoritmo construido era funcional.
