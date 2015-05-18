@@ -12,5 +12,6 @@ Con este paso se obtendrán todos los archivos fuente y de entrada que necesita 
     cd build
     cmake ..
     make
+    ./CUDA_SISTEMA_IEEE_FC_118
 
-Con estos sencillos pasos *cmake* buscará las dependencias y verá que se puedan cumplir, en caso negativo se le informará al usuario para que proceda con la instalación de las librerías necesarias.
+Con estos sencillos pasos [cmake](http://www.cmake.org/) buscará las dependencias y verá que se puedan cumplir, en caso negativo se le informará al usuario para que proceda con la instalación de las librerías necesarias.
