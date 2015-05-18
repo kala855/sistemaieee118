@@ -1,7 +1,7 @@
 # sistemaieee118
 
 ### Compilación
-El proyecto hace uso de cmake. Para realizar el proceso de compilación se debe hacer lo siguiente:
+El proyecto hace uso de [cmake](http://www.cmake.org/). Para realizar el proceso de compilación se debe hacer lo siguiente:
 
     git clone https://github.com/kala855/sistemaieee118.git
 
