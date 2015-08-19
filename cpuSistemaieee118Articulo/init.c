@@ -19,7 +19,7 @@ int main(){
     char *fileNameGen = "../../inputs/gen";
     char *fileNameIMax = "../../inputs/imax";
     int numDataImax = 186;
-    double *Vn,*An,t,*Imax;
+    double *Vn,*An,t,*Imax, *A;
     structData *data;
     Imax = malloc(numDataImax*sizeof(double));
     data = (structData*)malloc(sizeof(structData));
@@ -34,13 +34,17 @@ int main(){
     data->numL = heightLineas;
     data->numG = heightGen;
     data->numC = heightCargas;
+
+    ///Verificar el cálculo de la Matriz A/// ojo
+    A = malloc((int)(data->numN)*(int)(data->numL)*sizeof(double));
     //////////////////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////////////////
     res = loadCorrientesMax(fileNameIMax, Imax);
     //////////////////////////////////////////////////////////////////////////////////////
+    calcularMatrizA(data,widthLineas,A);
 
-    printDataToFileVec("imax",numDataImax,Imax);
+    printDataToFileMat("A",10,A);
 
     Vn = (double*)malloc(data->numN*sizeof(double));
     An = (double*)malloc(data->numN*sizeof(double));

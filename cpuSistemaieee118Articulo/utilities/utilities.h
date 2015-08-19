@@ -33,3 +33,4 @@ int calcCargLineas(structData *data,double *An, double *Vn,double *Ism);
 int printDataToFileVec(char *name, int size,double *data);
 int printDataToFileMat(char *name, int size,double *data);
 int loadCorrientesMax(char *fileNameIMax, double *Imax);
+int calcularMatrizA(structData *data, int widthLineas, double *A);

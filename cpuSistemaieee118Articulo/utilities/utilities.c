@@ -394,3 +394,16 @@ int printDataToFileMat(char *name, int size,double *data){
     return 0;
 
 }
+
+int calcularMatrizA(structData *data, int widthLineas, double *A){
+    zeros((data->numL)*(data->numN),A);
+    int i;
+    int N1,N2;
+    for(i=0;i<data->numL;i++){
+        N1 = (int)(data->lineas[i*widthLineas+0])-1;
+        N2 = (int)(data->lineas[i*widthLineas+1])-1;
+        A[i*(int)(data->numN)+N1] = 1;
+        A[i*(int)(data->numN)+N2] = -1;
+    }
+    return 0;
+}
