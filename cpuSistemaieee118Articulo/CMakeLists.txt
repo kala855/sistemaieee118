@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+project(SISTEMA_IEEE_FC_118_ARTICULO)
+find_package(LAPACK REQUIRED)
+add_executable(SISTEMA_IEEE_FC_118_ARTICULO init.c)
+target_link_libraries(SISTEMA_IEEE_FC_118_ARTICULO utilities m lapack blas)
+add_subdirectory(utilities)
