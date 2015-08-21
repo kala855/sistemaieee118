@@ -399,11 +399,56 @@ int calcularMatrizA(structData *data, int widthLineas, double *A){
     zeros((data->numL)*(data->numN),A);
     int i;
     int N1,N2;
-    for(i=0;i<data->numL;i++){
+    for(i=0;i<(data->numL);i++){
         N1 = (int)(data->lineas[i*widthLineas+0])-1;
         N2 = (int)(data->lineas[i*widthLineas+1])-1;
         A[i*(int)(data->numN)+N1] = 1;
         A[i*(int)(data->numN)+N2] = -1;
     }
     return 0;
+}
+
+int printMatrixToFile(double *A, int numFilas, int numColumnas, char *name){
+    FILE *dato;
+    dato = fopen(name,"w");
+    int i,j;
+    for (i = 0; i < numFilas; i++) {
+        for (j = 0; j < numColumnas; j++) {
+            if(j!=numColumnas-1)
+                fprintf(dato,"%.0lf ", A[i*(int)(numColumnas)+j]);
+            else
+                fprintf(dato,"%.0lf\n", A[i*(int)(numColumnas)+j]);
+
+        }
+    }
+    fclose(dato);
+    return 0;
+}
+
+int calcularZp(structData *data, int heightLineas, int widthLineas, double *ZpReal, double *ZpImag){
+    int i;
+    for (i = 0; i < heightLineas; i++) {
+        ZpReal[i] = data->lineas[i*widthLineas+2];
+        ZpImag[i] = data->lineas[i*widthLineas+3];
+
+    }
+    return 0;
+}
+
+
+int loadNW(char *fileNameNW, double *NW){
+    FILE *datosNW;
+    int numDataNW, i;
+    numDataNW = 3;
+    datosNW = fopen(fileNameNW,"r");
+    if (datosNW == NULL){
+        printf("Archivo de NW inexistente %s verifique \n",fileNameNW);
+        exit(1);
+    }
+
+    for(i=0;i<numDataNW;i++){
+        fscanf(datosNW,"%lf,%lf,%lf,%lf\n",&NW[i*4+0],&NW[i*4+1],&NW[i*4+2],&NW[i*4+3]);
+    }
+
+    fclose(datosNW);
 }

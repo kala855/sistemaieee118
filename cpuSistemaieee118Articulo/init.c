@@ -18,8 +18,9 @@ int main(){
     char *fileNameCargas = "../../inputs/cargas";
     char *fileNameGen = "../../inputs/gen";
     char *fileNameIMax = "../../inputs/imax";
+    char *fileNameNW = "../../inputs/NW";
     int numDataImax = 186;
-    double *Vn,*An,t,*Imax, *A;
+    double *Imax, *A, *ZpReal, *ZpImag, *NW;
     structData *data;
     Imax = malloc(numDataImax*sizeof(double));
     data = (structData*)malloc(sizeof(structData));
@@ -35,23 +36,33 @@ int main(){
     data->numG = heightGen;
     data->numC = heightCargas;
 
-    ///Verificar el cálculo de la Matriz A/// ojo
+    //////////////////////////////////////////////////////////////////////////////////////
     A = malloc((int)(data->numN)*(int)(data->numL)*sizeof(double));
+    NW = malloc(3*4*sizeof(double));
     //////////////////////////////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////////////////////////////////////////////////
     res = loadCorrientesMax(fileNameIMax, Imax);
+    res = loadNW(fileNameNW, NW);
+
+    for (i = 0; i < 3; i++) {
+       for (j = 0; j < 4; j++) {
+           printf("%lf ", NW[i*4+j]);
+       }
+       printf("\n");
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////
     calcularMatrizA(data,widthLineas,A);
+    printMatrixToFile(A,data->numL, data->numN, "A");
+    //////////////////////////////////////////////////////////////////////////////////////
+    ZpReal = malloc(heightLineas*sizeof(double));
+    ZpImag = malloc(heightLineas*sizeof(double));
+    calcularZp(data,heightLineas,widthLineas,ZpReal,ZpImag);
+    /////////////////////////////////////////////////////////////////////////////////////
 
-    printDataToFileMat("A",10,A);
-
-    Vn = (double*)malloc(data->numN*sizeof(double));
-    An = (double*)malloc(data->numN*sizeof(double));
     double *ybusReal = (double*) malloc(data->numN*data->numN*sizeof(double));
     double *ybusImag = (double*) malloc(data->numN*data->numN*sizeof(double));
-    ones(data->numN,Vn);
-    zeros(data->numN,An);
     calcularYbus(data,ybusReal,ybusImag);
     NumP = (int) data->numN - 1;
     int *NNP = (int *)malloc((data->numN-1)*sizeof(int));
@@ -66,12 +77,6 @@ int main(){
     zeros(data->numN,Qref);
     int k;
     int N1;
-
-    for (k = 0; k < data->numG; k++) {
-        N1 = (int) data->gen[k*widthGen+0] - 1;
-        Pref[N1] = Pref[N1] + data->gen[k*widthGen+1];
-        Vn[N1] = data->gen[k*widthGen+2];
-    }
 
     for (k = 0 ; k < data->numC; k++) {
         N1 = (int)data->cargas[k*widthCargas] - 1;
@@ -107,54 +112,9 @@ int main(){
     JacRt = (double*)malloc((NumPQ)*(NumPQ)*sizeof(double));
     Ism = (double*)malloc(data->numL*sizeof(double));
 
-    zeros(data->numL,Ism);
-    while (Error>1e-8){
-        calcularJacobiano(data,ybusReal,ybusImag,Vn,An,Jpp,Jpq,Jqp,Jqq,Pn,Qn);
-
-        for (i = 0 ; i < NumP ; i++) {
-            N1 = NNP[i] - 1;
-            dP[i] = Pref[N1] - Pn[N1];
-        }
-
-        for (i = 0; i < NumQ; i++ ) {
-            N1 = NNQ[i] - 1;
-            dQ[i] = Qref[N1] - Qn[N1];
-        }
-
-        createJacR(NNP, NNQ, NumQ, NumP, (int)data->numN, Jpp, Jpq, Jqp, Jqq, JacR);
-        transposeJacR(JacR,NumPQ,JacRt);
-        createdPdQ(dP,dQ,NumP,NumQ,dPdQ);
-        memcpy(dX,dPdQ,sizeof(double)*NumPQ);
-        dgesv_(&NumPQ,&nrhs,JacRt,&lda,ipiv,dX,&ldb,&info);
-
-        for (k = 0; k < NumP; k++) {
-            N1 = NNP[k] - 1;
-            An[N1] = An[N1] + dX[k];
-        }
-
-        for (k = 0; k < NumQ; k++) {
-            N1 = NNQ[k] - 1;
-            kk = k + NumP;
-            Vn[N1] = Vn[N1] + dX[kk];
-        }
-
-       Error = maxAbs(NumPQ,dPdQ);
-
-        if (iter>data->maxIter) {
-            printf("..... No converge despues de %d iteraciones\nError = %lf\n", data->maxIter, Error);
-            break;
-        }
-        iter++;
-    }
-
-    calcCargLineas(data,An,Vn,Ism);
     printDataToFileVec("ismData",data->numL,Ism);
-    printDataToFileVec("vnData",data->numN,Vn);
-    printDataToFileVec("anData",data->numN,An);
 
     free(data);
-    free(Vn);
-    free(An);
     free(ybusReal);
     free(ybusImag);
     free(NNP);

@@ -34,3 +34,6 @@ int printDataToFileVec(char *name, int size,double *data);
 int printDataToFileMat(char *name, int size,double *data);
 int loadCorrientesMax(char *fileNameIMax, double *Imax);
 int calcularMatrizA(structData *data, int widthLineas, double *A);
+int printMatrixToFile(double *A, int numFilas, int numColumnas, char *name);
+int calcularZp(structData *data, int heightLineas, int widthLineas, double *ZpReal,double *ZpImag);
+int loadNW(char *fileNameNW, double *NW);
