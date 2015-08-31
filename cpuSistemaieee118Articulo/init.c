@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "utilities/utilities.h"
+#include <time.h>
+#include <math.h>
 extern void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv,\
         double* b, int* ldb, int* info );
 
@@ -19,7 +21,7 @@ int main(){
     char *fileNameGen = "../../inputs/gen";
     char *fileNameIMax = "../../inputs/imax";
     char *fileNameNW = "../../inputs/NW";
-    int numDataImax = 186;
+    int numDataImax = 186, NumW = 3;
     double *Imax, *A, *ZpReal, *ZpImag, *NW;
     structData *data;
     Imax = malloc(numDataImax*sizeof(double));
@@ -45,12 +47,12 @@ int main(){
     res = loadCorrientesMax(fileNameIMax, Imax);
     res = loadNW(fileNameNW, NW);
 
-    for (i = 0; i < 3; i++) {
+/*    for (i = 0; i < 3; i++) {
        for (j = 0; j < 4; j++) {
            printf("%lf ", NW[i*4+j]);
        }
        printf("\n");
-    }
+    }*/
 
     //////////////////////////////////////////////////////////////////////////////////////
     calcularMatrizA(data,widthLineas,A);
@@ -59,6 +61,30 @@ int main(){
     ZpReal = malloc(heightLineas*sizeof(double));
     ZpImag = malloc(heightLineas*sizeof(double));
     calcularZp(data,heightLineas,widthLineas,ZpReal,ZpImag);
+
+    int ni = 1, m;
+    int k;
+    double r, lambda = 0.0, kk, N, Pmax, Vw, Pw;
+    NumW = 3;
+    double Vmin = 4, Vnom = 12, Vmax = 25;
+    srand((unsigned)time(NULL));
+    for (k = 0; k < ni; k++) {
+        for (m = 0; m < NumW; m++) {
+            r = ((double)rand()/(double)RAND_MAX);
+            lambda = NW[m*NumW+2];
+            kk = NW[m*NumW+3];
+            Pmax = NW[m*NumW+1];
+            N = NW[m*NumW+0];
+            Vw = lambda*pow((-log(1-r)),(1/kk));
+            if ((Vw<Vmin)||(Vw>Vmax))
+                Pw = 0;
+            if ((Vmin<Vw)&&(Vw<Vnom))
+                Pw = Pmax*pow((Vw/Vnom),3);
+            if ((Vw>Vnom)&&(Vw<Vmax))
+                Pw = Pmax;
+            printf("%lf \n", Vw);
+        }
+    }
     /////////////////////////////////////////////////////////////////////////////////////
 
     double *ybusReal = (double*) malloc(data->numN*data->numN*sizeof(double));
@@ -75,7 +101,6 @@ int main(){
     double *Qref = (double*)malloc(data->numN*sizeof(double));
     zeros(data->numN,Pref);
     zeros(data->numN,Qref);
-    int k;
     int N1;
 
     for (k = 0 ; k < data->numC; k++) {
@@ -93,7 +118,7 @@ int main(){
 
     double Error = 100.0;
     int iter = 0;
-    int lda = NumP+NumQ,kk;
+    int lda = NumP+NumQ;
     int NumPQ = NumP+NumQ, nrhs = 1;
     int *ipiv,ldb = NumQ+NumP,info;
 
