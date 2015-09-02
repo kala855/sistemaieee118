@@ -37,3 +37,5 @@ int calcularMatrizA(structData *data, int widthLineas, double *A);
 int printMatrixToFile(double *A, int numFilas, int numColumnas, char *name);
 int calcularZp(structData *data, int heightLineas, int widthLineas, double *ZpReal,double *ZpImag);
 int loadNW(char *fileNameNW, double *NW);
+int newtonRaphson(structData *data, double *Vn);
+int calculoIrama(double *Vrama, double *ZpReal, double *ZpImag, int heightLineas, double *Irama);
