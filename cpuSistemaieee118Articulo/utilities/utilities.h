@@ -14,6 +14,15 @@ typedef struct{
     int iteraciones;
 } structData;
 
+
+typedef struct{
+    double *sum;
+    double *sumcuad;
+    double *lv;
+    double *hv;
+    double *sob;
+} Mont;
+
 double maxLineas(structData *data, int widthLineas,int heightLineas);
 int calcularYbus(structData *data, double *ybusReal, double * ybusImag);
 int ones(int size,double *Vn);
@@ -37,5 +46,13 @@ int calcularMatrizA(structData *data, int widthLineas, double *A);
 int printMatrixToFile(double *A, int numFilas, int numColumnas, char *name);
 int calcularZp(structData *data, int heightLineas, int widthLineas, double *ZpReal,double *ZpImag);
 int loadNW(char *fileNameNW, double *NW);
-int newtonRaphson(structData *data, double *Vn);
 int calculoIrama(double *Vrama, double *ZpReal, double *ZpImag, int heightLineas, double *Irama);
+int newtonRaphson(structData *data, double *Vn, double *An, double *ybusReal, double *ybusImag);
+int calculoVn(double *Vn, double *An, int height, double *VnReal, double *VnImag);
+int addVectors(double *vec1, double *vec2, int numN);
+int subVectors(double *vec1, double *vec2, int numN);
+int calculoSobrecarga(double *IlineaReal, double *IlineaImag, double *sobrecarga, double *Imax, int numL);
+int calculoMontSobrecarga(int numL, double *sobrecarga, Mont *mont);
+int calculoCorrientesRama(int numN,double *Vn, Mont *mont);
+int calculosFinales(int numN,int ni, Mont *mont, double *Vmedia, double *Vdesv, double *Probmin, double *ProbMax);
+int calculoProbSobrecarga(int numL, int ni, Mont *mont, double *Probsobrecarga);

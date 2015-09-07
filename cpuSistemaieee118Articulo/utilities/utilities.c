@@ -457,7 +457,7 @@ int loadNW(char *fileNameNW, double *NW){
 }
 
 
-int newtonRaphson(structData *data, double *Vn, double *An){
+int newtonRaphson(structData *data, double *Vn, double *An, double *ybusReal, double *ybusImag){
     int res,i,j;
     int widthCargas = 3;
     int widthGen = 3;
@@ -467,9 +467,9 @@ int newtonRaphson(structData *data, double *Vn, double *An){
     int heightLineas = 186, NumP;
     //Vn = (double*)malloc(data->numN*sizeof(double));
     //An = (double*)malloc(data->numN*sizeof(double));
-    double *ybusReal = (double*) malloc(data->numN*data->numN*sizeof(double));
-    double *ybusImag = (double*) malloc(data->numN*data->numN*sizeof(double));
-    //ones(data->numN,Vn);
+//    double *ybusReal = (double*) malloc(data->numN*data->numN*sizeof(double));
+  //  double *ybusImag = (double*) malloc(data->numN*data->numN*sizeof(double));
+    ones(data->numN,Vn);
     zeros(data->numN,An);
     calcularYbus(data,ybusReal,ybusImag);
     NumP = (int) data->numN - 1;
@@ -570,8 +570,8 @@ int newtonRaphson(structData *data, double *Vn, double *An){
     //printDataToFileVec("vnData",data->numN,Vn);
     //printDataToFileVec("anData",data->numN,An);
 
-    free(ybusReal);
-    free(ybusImag);
+    //free(ybusReal);
+    //free(ybusImag);
     free(NNP);
     free(NNQ);
     free(vector1);
@@ -605,6 +605,71 @@ int calculoVn(double *Vn, double *An, int height, double *VnReal, double *VnImag
     for (i = 0; i < height; i++) {
         VnReal[i] = Vn[i]*cos(An[i]);
         VnImag[i] = Vn[i]*sin(An[i]);
+    }
+    return 0;
+}
+
+int addVectors(double *vec1, double *vec2, int numN){
+    int i;
+    for (i = 0; i < numN; i++) {
+        vec1[i] = vec1[i] + vec2[i];
+    }
+    return 0;
+}
+
+int subVectors(double *vec1, double *vec2, int numN){
+    int i;
+    for (i = 0; i < numN; i++) {
+        vec1[i] = vec1[i] - vec2[i];
+    }
+    return 0;
+}
+
+int calculoSobrecarga(double *IlineaReal, double *IlineaImag, double *sobrecarga, double *Imax, int numL){
+    int i;
+    for (i = 0; i < numL; i++) {
+        sobrecarga[i] = sqrt(IlineaReal[i]*IlineaReal[i] + IlineaImag[i]*IlineaImag[i])/Imax[i];
+    }
+    return 0;
+}
+
+int calculoMontSobrecarga(int numL, double *sobrecarga, Mont *mont){
+    int i;
+    for (i = 0; i < numL; i++) {
+        if(sobrecarga[i]>1.0)
+            mont->sob[i] = mont->sob[i] + 1;
+    }
+    return 0;
+}
+
+
+int calculoCorrientesRama(int numN,double *Vn,Mont *mont){
+    int i;
+    for (i = 0; i < numN; i++) {
+        mont->sum[i] = mont->sum[i] + Vn[i];
+        mont->sumcuad[i] = mont->sumcuad[i] + Vn[i] * Vn[i];
+        if(Vn[i]<0.9)
+            mont->lv[i] = mont->lv[i] + 1;
+        if(Vn[i]>1.1)
+            mont->hv[i] = mont->hv[i] + 1;
+    }
+    return 0;
+}
+
+int calculosFinales(int numN,int ni, Mont *mont, double *Vmedia, double *Vdesv, double *Probmin, double *ProbMax){
+    int i;
+    for (i = 0; i < numN; i++) {
+        Vmedia[i] = mont->sum[i]/ni;
+        Vdesv[i] = mont->sumcuad[i] - 2*mont->sum[i]*Vmedia[i] - Vmedia[i]*Vmedia[i];
+        Probmin[i] = mont->lv[i]/ni;
+        ProbMax[i] = mont->hv[i]/ni;
+    }
+}
+
+int calculoProbSobrecarga(int numL, int ni, Mont *mont, double *Probsobrecarga){
+    int i;
+    for (i = 0; i < numL; i++) {
+        Probsobrecarga[i] = mont->sob[i]/ni;
     }
     return 0;
 }

@@ -27,8 +27,10 @@ int main(){
     int numDataImax = 186, NumW = 3;
     double *Imax, *A, *ZpReal, *ZpImag, *NW, *Vn, *An;
     structData *data;
+    Mont *mont;
     Imax = malloc(numDataImax*sizeof(double));
     data = (structData*)malloc(sizeof(structData));
+    mont = (Mont*)malloc(sizeof(Mont));
     ///////// Los datos son cargados desde los archivos de texto //////////////////////////
     //////// Lineas, generadores y cargas se llevan a la estructura data//////////////////
     res = loadDataFromFile(fileNameLineas,fileNameCargas,fileNameGen, data);
@@ -69,20 +71,49 @@ int main(){
 
 
     //dgemv_ configuration parameters
-    int mi = 186, n = 118, lda = 186, incx = 1, incy = 1;
-    double alpha = 1, beta = 0, *Vrama, *Irama, *VnReal, *VnImag;
+    int mi = 186, n = 118, lda = 186, ldan = 118, incx = 1, incy = 1;
+    double alpha = 1, beta = 0, *Vrama, *Irama, *VnReal, *VnImag, *ybusReal;
+    double *ybusImag, *InReal, *InImag, *InImagTmp, *IlineaReal, *IlineaImag, *sobrecarga, *Vmedia;
+    double *Vdesv, *Probmin, *Probmax, *Probsobrecarga;
 
-    int ni = 100, m;
+    int ni = 1000, m;
     int k;
-    char nameVrama[10], nameIrama[10], nameZpReal[10];
+    char nameVrama[10], nameIrama[10], nameZpReal[10], nameVnReal[10], nameVnImag[10];
+    char nameInReal[10], nameInImag[10], nameSobrecarga[10];
     double r, lambda = 0.0, kk, N, Pmax, Vw, Pw;
     NumW = 3;
     double Vmin = 4, Vnom = 12, Vmax = 25;
     srand((unsigned)time(NULL));
-    Vrama = malloc(186*sizeof(double));
-    Irama = malloc(186*sizeof(double));
-    VnReal = malloc(118*sizeof(double));
-    VnImag = malloc(118*sizeof(double));
+    ybusReal = malloc(data->numN*data->numN*sizeof(double));
+    ybusImag = malloc(data->numN*data->numN*sizeof(double));
+    InReal = malloc(data->numN*sizeof(double));
+    InImag = malloc(data->numN*sizeof(double));
+    InImagTmp = malloc(data->numN*sizeof(double));
+    Vrama = malloc(data->numL*sizeof(double));
+    Irama = malloc(data->numL*sizeof(double));
+    IlineaReal = malloc(data->numL*sizeof(double));
+    IlineaImag = malloc(data->numL*sizeof(double));
+    sobrecarga = malloc(data->numL*sizeof(double));
+    VnReal = malloc(data->numN*sizeof(double));
+    VnImag = malloc(data->numN*sizeof(double));
+    mont->sum = malloc(data->numN*sizeof(double));
+    mont->sumcuad = malloc(data->numN*sizeof(double));
+    mont->lv = malloc(data->numN*sizeof(double));
+    mont->hv = malloc(data->numN*sizeof(double));
+    mont->sob = malloc(data->numL*sizeof(double));
+    Vmedia = malloc(data->numN*sizeof(double));
+    Vdesv = malloc(data->numN*sizeof(double));
+    Probmin = malloc(data->numN*sizeof(double));
+    Probmax = malloc(data->numN*sizeof(double));
+    Probsobrecarga = malloc(data->numL*sizeof(double));
+
+    //mont Inicializacion
+    zeros(data->numN, mont->sum);
+    zeros(data->numN, mont->sumcuad);
+    zeros(data->numN, mont->lv);
+    zeros(data->numN, mont->hv);
+    zeros(data->numL, mont->sob);
+
     for (k = 0; k < ni; k++) {
         for (m = 0; m < NumW; m++) {
             r = ((double)rand()/(double)RAND_MAX);
@@ -101,25 +132,65 @@ int main(){
             data->gen[(int)(N)*widthGen+1] = Pw;
             //printf("%lf \n",data->gen[(int)(N)*widthGen+1]);
         }
-        res = newtonRaphson(data, Vn);
-        calculoVn(Vn, heightLineas, data->numN, VnReal, VnImag);
+        res = newtonRaphson(data, Vn, An, ybusReal, ybusImag);
+        calculoVn(Vn,An, data->numN, VnReal, VnImag);
+        //cálculo de InReal
+        dgemv_("N",&n, &n, &alpha, ybusReal, &ldan, VnReal, &incx, &beta, InReal, &incy);
+        dgemv_("N",&n, &n, &alpha, ybusImag, &ldan, VnImag, &incx, &beta, InImag, &incy);
+        res = subVectors(InReal, InImag, data->numN);
+
+        //cálculo de InImag
+        dgemv_("N",&n, &n, &alpha, ybusReal, &ldan, VnImag, &incx, &beta, InImag, &incy);
+        dgemv_("N",&n, &n, &alpha, ybusImag, &ldan, VnReal, &incx, &beta, InImagTmp, &incy);
+        res = addVectors(InImag,InImagTmp, data->numN);
+
+        //cálculo de ilinea
+        dgemv_("N",&mi, &n, &alpha, A, &lda, InReal, &incx, &beta, IlineaReal, &incy);
+        dgemv_("N",&mi, &n, &alpha, A, &lda, InImag, &incx, &beta, IlineaImag, &incy);
+
+        calculoSobrecarga(IlineaReal, IlineaImag, sobrecarga, Imax, data->numL);
+        calculoMontSobrecarga(data->numL, sobrecarga, mont);
+
+        calculoCorrientesRama(data->numN,Vn,mont);
+
+  //      sprintf(nameSobrecarga, "sobrecarga%d",k);
+        //sprintf(nameVnReal, "VnReal%d",k);
+        //sprintf(nameVnImag, "VnImag%d",k);
+        //sprintf(nameInReal, "InReal%d",k);
+        //sprintf(nameInImag, "InImag%d",k);
         //sprintf(nameVrama, "Vrama%d",k);
         //sprintf(nameIrama, "Irama%d",k);
         //sprintf(nameZpReal, "Zp%d",k);
+//        printDataToFileVec(nameSobrecarga,data->numL,mont->sob);
        // printDataToFileVec(name,data->numN,Vn);
-        dgemv_("N",&mi, &n, &alpha, A, &lda, Vn, &incx, &beta, Vrama, &incy);
+        //printDataToFileVec(nameVnReal,data->numN,VnReal);
+        //printDataToFileVec(nameVnReal,data->numN,VnReal);
+        //printDataToFileVec(nameInReal,data->numL, IlineaReal);
+        //printDataToFileVec(nameInImag,data->numL, IlineaImag);
+        //dgemv_("N",&mi, &n, &alpha, A, &lda, Vn, &incx, &beta, Vrama, &incy);
         //printDataToFileVec(nameVrama,186,Vrama);
         //calculoIrama(Vrama,ZpReal,ZpImag,heightLineas,Irama);
         //printDataToFileVec(nameIrama,186,Irama);
         //printDataToFileVec(nameZpReal,186,ZpReal);
-
-
-
-
     }
     /////////////////////////////////////////////////////////////////////////////////////
 
+    calculosFinales(data->numN, ni, mont,Vmedia,Vdesv,Probmin,Probmax);
+    calculoProbSobrecarga(data->numL,ni,mont, Probsobrecarga);
+    printDataToFileVec("vmedia",data->numN,Vmedia);
+    printDataToFileVec("vdesv", data->numN,Vdesv);
+    printDataToFileVec("probmin", data->numN,Probmin);
+    printDataToFileVec("probmax", data->numN,Probmax);
+    printDataToFileVec("probsobrecarga", data->numL,Probsobrecarga);
+
     free(Imax);
+    free(VnReal);free(VnImag);
+    free(ybusReal);free(ybusImag);
+    free(InReal);free(InImag);free(InImagTmp);
+    free(IlineaReal);free(IlineaImag);
+    free(mont->sob);free(mont->lv);free(mont->sum);free(mont->sumcuad);free(mont->hv);free(mont);
+    free(Vmedia);free(Vdesv);free(Probmin);free(Probmax);free(Probsobrecarga);
+    free(sobrecarga);
     free(Irama);
     free(Vrama);
     free(data);
