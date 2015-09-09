@@ -127,6 +127,8 @@ int main(){
         iter++;
     }
 
+
+
     calcCargLineas(data,An,Vn,Ism);
     printDataToFileVec("ismData",data->numL,Ism);
     printDataToFileVec("vnData",data->numN,Vn);
