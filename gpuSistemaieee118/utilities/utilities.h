@@ -50,3 +50,4 @@ __global__ void d_filldPdQ1(double *d_dP, int NumP, double *d_dPdQ);
 __global__ void d_fill_d_dx(double *d_dPdQ, int NumPQ, double *d_dX);
 __global__ void d_calc_An(double *dX, int *NNP, int NumP, double *An);
 __global__ void d_calc_Vn(double *dX, int *NNQ, int NumP, int NumQ, double *Vn);
+

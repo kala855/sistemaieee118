@@ -173,6 +173,9 @@ int main(){
     dim3 dimBlock(blockSize,1,1);
     dim3 dimGrid(ceil(data->numN/float(blockSize)),1,1);
 
+    dim3 dimBlockXY(blockSize2D,blockSize2D,1);
+    dim3 dimGridXY(ceil(data->numN/float(blockSize2D)),ceil(data->numN/float(blockSize2D)),1);
+
     dim3 dimBlock2(blockSize2D,blockSize2D,1);
     dim3 dimGrid2(ceil(data->numN/float(blockSize2D)),ceil(data->numN/float(blockSize2D)),1);
 
@@ -196,6 +199,7 @@ int main(){
 
         d_calcularJacobiano_1<<<dimGrid,dimBlock>>>(data->numN, d_ybusReal, d_ybusImag,d_Vn,\
                 d_An,d_Pn,d_Qn);
+
         cudaDeviceSynchronize();
         d_calcularJacobiano_2<<<dimGrid2,dimBlock2>>>(data->numN, d_ybusReal, d_ybusImag, d_Vn\
                 ,d_An, d_Pn,d_Qn, d_Jpp, d_Jpq, d_Jqp, d_Jqq);
