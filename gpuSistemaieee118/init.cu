@@ -28,12 +28,12 @@ int main(){
     int widthCargas = 3;
     int widthGen = 3;
     int widthLineas = 6;
-    int heightCargas = 83;
-    int heightGen = 15;
-    int heightLineas = 186, NumP;
-    char *fileNameLineas = "../../inputs/lineas";
-    char *fileNameCargas = "../../inputs/cargas";
-    char *fileNameGen = "../../inputs/gen";
+    int heightCargas = 83*10;
+    int heightGen = 15*10;
+    int heightLineas = 1896/*186*/, NumP;
+    char *fileNameLineas = "../../inputs/lineasBig";
+    char *fileNameCargas = "../../inputs/cargasBig";
+    char *fileNameGen = "../../inputs/genBig";
     double *Vn,*An,t;
     structData *data;
     data = (structData*)malloc(sizeof(structData));
@@ -157,7 +157,6 @@ int main(){
 
     cublasOperation_t trans = CUBLAS_OP_N;
 
-
     gpuErrchk(cudaMalloc((void**)&d_JacRt,sizeof(double)*NumPQ*NumPQ));
     gpuErrchk(cudaMalloc((void**)&d_dX,sizeof(double)*NumPQ));
     gpuErrchk(cudaMalloc((void**)&devIpiv,sizeof(int)*NumPQ));
@@ -257,6 +256,8 @@ int main(){
         iter++;
     }
 
+    gpuErrchk(cudaMemcpy(Pn,d_Pn,sizeof(double)*data->numN,cudaMemcpyDeviceToHost));
+    printDataToFileVec("pnData",data->numN,Pn);
 
     gpuErrchk(cudaMemcpy(An,d_An,sizeof(double)*data->numN,cudaMemcpyDeviceToHost));
     gpuErrchk(cudaMemcpy(Vn,d_Vn,sizeof(double)*data->numN,cudaMemcpyDeviceToHost));

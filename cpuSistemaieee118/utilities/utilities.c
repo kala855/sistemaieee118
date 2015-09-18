@@ -278,11 +278,11 @@ int loadDataFromFile(char *filenameLineas, char *filenameCargas, char *filenameG
     FILE *datosLineas,*datosGen,*datosCargas;
     int i, j, widthLineas,heightLineas,widthGen, heightGen,widthCargas, heightCargas;
     widthLineas = 6;
-    heightLineas = 186;
+    heightLineas = 1896;/*186;*/
     widthGen = 3;
-    heightGen = 15;
+    heightGen = 15*10;
     widthCargas = 3;
-    heightCargas = 83;
+    heightCargas = 83*10;
 
     datosGen = fopen(filenameGen,"r");
     datosLineas = fopen(filenameLineas,"r");

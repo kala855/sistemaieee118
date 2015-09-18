@@ -11,12 +11,12 @@ int main(){
     int widthCargas = 3;
     int widthGen = 3;
     int widthLineas = 6;
-    int heightCargas = 83;
-    int heightGen = 15;
-    int heightLineas = 186, NumP;
-    char *fileNameLineas = "../../inputs/lineas";
-    char *fileNameCargas = "../../inputs/cargas";
-    char *fileNameGen = "../../inputs/gen";
+    int heightCargas = 83*10;//83;
+    int heightGen = 15*10;
+    int heightLineas = 1896/*186*/, NumP;
+    char *fileNameLineas = "../../inputs/lineasBig";
+    char *fileNameCargas = "../../inputs/cargasBig";
+    char *fileNameGen = "../../inputs/genBig";
     double *Vn,*An,t;
     structData *data;
     data = (structData*)malloc(sizeof(structData));
@@ -133,6 +133,7 @@ int main(){
     printDataToFileVec("ismData",data->numL,Ism);
     printDataToFileVec("vnData",data->numN,Vn);
     printDataToFileVec("anData",data->numN,An);
+    printDataToFileVec("pnData",data->numN,Pn);
 
     free(data);
     free(Vn);
