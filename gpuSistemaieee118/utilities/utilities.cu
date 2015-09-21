@@ -102,6 +102,15 @@ __global__ void d_transposeJacr(double *JacR,int NumPQ, double *JacRt){
 
 }
 
+__global__ void d_zeros2(int size,double *An){
+    int i = blockIdx.y*blockDim.y+threadIdx.y;
+    int j = blockIdx.x*blockDim.x+threadIdx.x;
+    if(i < size && j < size) {
+        An[i*size+j] = 0.0;
+    }
+}
+
+
 __global__ void d_zeros(int size,double *An){
     int i = blockIdx.x*blockDim.x+threadIdx.x;
     if(i < size) {

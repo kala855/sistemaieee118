@@ -13,7 +13,7 @@ int main(){
     int widthLineas = 6;
     int heightCargas = 83*10;//83;
     int heightGen = 15*10;
-    int heightLineas = 1896/*186*/, NumP;
+    int heightLineas = 1896,/*186,*/ NumP;
     char *fileNameLineas = "../../inputs/lineasBig";
     char *fileNameCargas = "../../inputs/cargasBig";
     char *fileNameGen = "../../inputs/genBig";
@@ -40,6 +40,7 @@ int main(){
     genVector(vector1, 1, data->numN);
     int *NNQ = (int *) malloc(data->numN*sizeof(int));
     int NumQ = setdiff(vector1, data->gen, data->numN, data->numG, NNQ);
+    printf("NumQ = %d\n",NumQ);
     double *Pref = (double*)malloc(data->numN*sizeof(double));
     double *Qref = (double*)malloc(data->numN*sizeof(double));
     zeros(data->numN,Pref);
@@ -88,8 +89,14 @@ int main(){
     Ism = (double*)malloc(data->numL*sizeof(double));
 
     zeros(data->numL,Ism);
+
+    char name[10];
     while (Error>1e-8){
         calcularJacobiano(data,ybusReal,ybusImag,Vn,An,Jpp,Jpq,Jqp,Jqq,Pn,Qn);
+        sprintf(name, "Jpp%d",iter);
+        printDataToFileMat(name, (int)data->numN,Jpp);
+        //printDataToFileVec(name,(int)data->numN,Pn);
+
 
         for (i = 0 ; i < NumP ; i++) {
             N1 = NNP[i] - 1;
@@ -138,6 +145,7 @@ int main(){
     free(data);
     free(Vn);
     free(An);
+    free(Pn);
     free(ybusReal);
     free(ybusImag);
     free(NNP);

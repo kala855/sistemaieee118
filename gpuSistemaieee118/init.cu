@@ -30,7 +30,7 @@ int main(){
     int widthLineas = 6;
     int heightCargas = 83*10;
     int heightGen = 15*10;
-    int heightLineas = 1896/*186*/, NumP;
+    int heightLineas = 1896,/*186,*/ NumP;
     char *fileNameLineas = "../../inputs/lineasBig";
     char *fileNameCargas = "../../inputs/cargasBig";
     char *fileNameGen = "../../inputs/genBig";
@@ -57,6 +57,7 @@ int main(){
     genVector(vector1, 1, data->numN);
     int *NNQ = (int *) malloc(data->numN*sizeof(int));
     int NumQ = setdiff(vector1, data->gen, data->numN, data->numG, NNQ);
+    printf("NumQ = %d\n",NumQ);
     double *Pref = (double*)malloc(data->numN*sizeof(double));
     double *Qref = (double*)malloc(data->numN*sizeof(double));
     zeros(data->numN,Pref);
@@ -179,21 +180,26 @@ int main(){
     dim3 dimGrid2(ceil(data->numN/float(blockSize2D)),ceil(data->numN/float(blockSize2D)),1);
 
     dim3 dimGrid3(ceil((data->numN*data->numN)/float(blockSize)),1,1);
-    dim3 dimGrid4(ceil(NumP/float(blockSize)),1,1);
-    dim3 dimGrid5(ceil(NumQ/float(blockSize)),1,1);
-    dim3 dimGrid6(ceil(NumP/float(blockSize2D)), ceil(NumP/float(blockSize2D)),1);
-    dim3 dimGrid7(ceil(NumP/float(blockSize)),1,1);
-    dim3 dimGrid8(ceil(NumPQ/float(blockSize2D)),ceil(NumPQ/float(blockSize2D)),1);
-    dim3 dimGrid9(ceil(NumQ/float(blockSize)),1,1);
-    dim3 dimGrid10(ceil(NumPQ/float(blockSize)),1,1);
+    dim3 dimGridTest(ceil((data->numN)/float(blockSize2D)),ceil((data->numN)/float(blockSize2D)),1);
 
+
+    dim3 dimGrid4(ceil((float)NumP/float(blockSize)),1,1);
+    dim3 dimGrid5(ceil((float)NumQ/float(blockSize)),1,1);
+    dim3 dimGrid6(ceil((float)NumP/float(blockSize2D)), ceil((float)NumP/float(blockSize2D)),1);
+    dim3 dimGrid7(ceil((float)NumP/float(blockSize)),1,1);
+    dim3 dimGrid8(ceil((float)NumPQ/float(blockSize2D)),ceil((float)NumPQ/float(blockSize2D)),1);
+    dim3 dimGrid9(ceil((float)NumQ/float(blockSize)),1,1);
+    dim3 dimGrid10(ceil((float)NumPQ/float(blockSize)),1,1);
+
+    char name[10];
+    printf("data->numN %f\n", data->numN);
     while (Error>1e-8){
 
         /*---- Initialize d_Jpp, d_Jpq, d_Jqp, d_Jqq, ----*/
-        d_zeros<<<dimGrid3,dimBlock>>>(data->numN*data->numN,d_Jpp);
-        d_zeros<<<dimGrid3,dimBlock>>>(data->numN*data->numN,d_Jpq);
-        d_zeros<<<dimGrid3,dimBlock>>>(data->numN*data->numN,d_Jqp);
-        d_zeros<<<dimGrid3,dimBlock>>>(data->numN*data->numN,d_Jqq);
+        d_zeros2<<<dimGridTest,dimBlock2>>>(data->numN,d_Jpp);
+        d_zeros2<<<dimGridTest,dimBlock2>>>(data->numN,d_Jpq);
+        d_zeros2<<<dimGridTest,dimBlock2>>>(data->numN,d_Jqp);
+        d_zeros2<<<dimGridTest,dimBlock2>>>(data->numN,d_Jqq);
         cudaDeviceSynchronize();
 
         d_calcularJacobiano_1<<<dimGrid,dimBlock>>>(data->numN, d_ybusReal, d_ybusImag,d_Vn,\
@@ -203,6 +209,12 @@ int main(){
         d_calcularJacobiano_2<<<dimGrid2,dimBlock2>>>(data->numN, d_ybusReal, d_ybusImag, d_Vn\
                 ,d_An, d_Pn,d_Qn, d_Jpp, d_Jpq, d_Jqp, d_Jqq);
         cudaDeviceSynchronize();
+       // sprintf(name, "d_Pn%d",iter);
+        //gpuErrchk(cudaMemcpy(Pn,d_Pn,sizeof(double)*data->numN,cudaMemcpyDeviceToHost));
+        //printDataToFileVec(name,(int)data->numN,Pn);
+        sprintf(name, "d_Jpp%d",iter);
+        gpuErrchk(cudaMemcpy(Jpp,d_Jpp,sizeof(double)*data->numN*data->numN,cudaMemcpyDeviceToHost));
+        printDataToFileMat(name,(int)data->numN, Jpp);
 
         dp_compute<<<dimGrid4,dimBlock>>>(NumP, d_NNP, d_Pref, d_Pn, d_dP);
 
@@ -239,7 +251,6 @@ int main(){
                     devInfo));
         cudaDeviceSynchronize();
 
-
         d_calc_An<<<dimGrid7,dimBlock>>>(d_dX, d_NNP, NumP, d_An);
         cudaDeviceSynchronize();
 
@@ -268,7 +279,7 @@ int main(){
 
     cusolverDnDestroy(handle);
     free(data);
-    free(Vn);
+    free(Vn);free(Pn);
     free(An);
     free(ybusReal);
     free(ybusImag);
@@ -298,7 +309,7 @@ int main(){
     cudaFree(d_Jqq);
     cudaFree(d_Jpq);
     cudaFree(d_Jqp);
-    cudaFree(d_Vn);
+    cudaFree(d_Vn);cudaFree(d_Pn);
     cudaFree(d_An);
     cudaFree(d_Pref);
     cudaFree(d_Qref);
